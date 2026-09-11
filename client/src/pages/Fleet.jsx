@@ -4,6 +4,8 @@ import PollTimer from '../components/PollTimer';
 import EmptyState from '../components/EmptyState';
 import { useConfirm } from '../useConfirm';
 import { useToast } from '../useToast';
+import { useAuth } from '../AuthContext';
+import FailModal from '../components/FailModal';
 
 const STATUS_COLORS = {
   PRINTING:   { bg: '#1e3a5f', text: '#60a5fa', label: 'Printing' },
@@ -321,6 +323,7 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
 
 export default function Fleet() {
   const navigate                              = useNavigate();
+  const { user, canOperate }                  = useAuth();
   const [confirm, confirmModal]               = useConfirm();
   const [showToast, toastEl]                  = useToast();
   const [printers, setPrinters]               = useState([]);
@@ -333,6 +336,8 @@ export default function Fleet() {
   const [allModels, setAllModels]             = useState([]);
   // { printerId, printerName, jobs, selectedJobId, isHeld }
   const [linkJobModal, setLinkJobModal]       = useState(null);
+  // Printer currently being reported for bad print / failure photo upload
+  const [failModalPrinter, setFailModalPrinter] = useState(null);
 
   useEffect(() => {
     fetch('/api/models').then(r => r.json()).then(setAllModels).catch(() => {});
@@ -508,16 +513,10 @@ export default function Fleet() {
     const { value: choice, text: reason } = result;
 
     if (choice === 'failure') {
-      const res = await fetch(`/api/printers/${printerId}/mark-job-failure`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note: reason }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        showToast(`Failed: ${body.error || res.status}`, 'error');
+      const printer = printers.find(p => p.id === printerId);
+      if (printer) {
+        setFailModalPrinter(printer);
       }
-      fetchPrinters();
       return;
     }
 
@@ -535,52 +534,45 @@ export default function Fleet() {
     fetchPrinters();
   }
 
-  async function badPrint(printerId) {
-    const printer = printers.find(p => p.id === printerId);
-    const result = await confirm({
-      title: `Mark Bad Print — ${printer?.name}`,
-      message: 'This will undo the completed quantity, reopen the part if it was closed, and decommission the printer pending investigation.\n\nRecommission the printer manually once you have confirmed it is safe to run.',
-      confirmLabel: 'Mark as Failed',
-      prompt: 'Reason for failure',
-      promptRequired: true,
-      danger: true,
-    });
-    if (!result) return;
-    const { text: reason } = result;
-    const res = await fetch(`/api/printers/${printerId}/mark-job-failure`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ note: reason }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      showToast(`Failed to mark bad print: ${body.error || res.status}`, 'error');
-    } else {
-      setSelectedForReady(prev => { const next = new Set(prev); next.delete(printerId); return next; });
+  function badPrint(printerId) {
+    if (!canOperate) {
+      showToast('Tài khoản Viewer chỉ có quyền xem, không thể thực hiện thao tác này.', 'error');
+      return;
     }
-    fetchPrinters();
+    const printer = printers.find(p => p.id === printerId);
+    if (printer) {
+      setFailModalPrinter(printer);
+    }
   }
 
-  async function uploadFailed(printerId) {
+  function uploadFailed(printerId) {
+    if (!canOperate) {
+      showToast('Tài khoản Viewer chỉ có quyền xem, không thể thực hiện thao tác này.', 'error');
+      return;
+    }
     const printer = printers.find(p => p.id === printerId);
-    const result = await confirm({
-      title: `Confirm Upload Failure — ${printer?.name}`,
-      message: 'This confirms the print never started. No completed quantity will be deducted. The printer will be decommissioned pending investigation.\n\nRecommission the printer manually when it is ready to run again.',
-      confirmLabel: 'Confirm Upload Failed',
-      prompt: 'Notes / reason',
-      promptRequired: true,
-      danger: true,
-    });
-    if (!result) return;
-    const { text: reason } = result;
+    if (printer) {
+      setFailModalPrinter(printer);
+    }
+  }
+
+  async function handleFailModalSubmit({ printerId, category, notes, photoUrl, operatorName }) {
     const res = await fetch(`/api/printers/${printerId}/mark-job-failure`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ note: reason }),
+      body: JSON.stringify({
+        note: notes,
+        failure_category: category,
+        photo_url: photoUrl,
+        operator_name: operatorName || user?.display_name || user?.username,
+      }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      showToast(`Failed to mark upload failure: ${body.error || res.status}`, 'error');
+      showToast(`Báo lỗi thất bại: ${body.error || res.status}`, 'error');
+    } else {
+      showToast('Đã lưu ảnh lỗi, hoàn sản lượng và đưa máy về trạng thái kiểm tra!', 'success');
+      setSelectedForReady(prev => { const next = new Set(prev); next.delete(printerId); return next; });
     }
     fetchPrinters();
   }
@@ -891,6 +883,16 @@ export default function Fleet() {
           </div>
         </div>
       ))}
+
+      {failModalPrinter && (
+        <FailModal
+          isOpen={!!failModalPrinter}
+          printer={failModalPrinter}
+          operatorName={user?.display_name || user?.username}
+          onClose={() => setFailModalPrinter(null)}
+          onSubmit={handleFailModalSubmit}
+        />
+      )}
     </div>
   );
 }

@@ -6,13 +6,13 @@ const db = require('./db');
 
 let _insert = null;
 
-function insert(printerId, eventType, note = null) {
+function insert(printerId, eventType, note = null, photoUrl = null, username = null) {
   if (!_insert) {
     _insert = db.prepare(
-      'INSERT INTO printer_events (printer_id, event_type, note, created_at) VALUES (?, ?, ?, ?)'
+      'INSERT INTO printer_events (printer_id, event_type, note, photo_url, username, created_at) VALUES (?, ?, ?, ?, ?, ?)'
     );
   }
-  _insert.run(printerId, eventType, note ?? null, Date.now());
+  _insert.run(printerId, eventType, note ?? null, photoUrl ?? null, username ?? null, Date.now());
 }
 
 module.exports = { insert };

@@ -225,6 +225,48 @@ async function initDb() {
       db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('dispatch_batch_size', '10')").run();
     } catch (_) {}
 
+    // Users and auth tables
+    try {
+      db.exec(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        salt TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'operator',
+        display_name TEXT,
+        email TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at INTEGER NOT NULL,
+        last_login_at INTEGER
+      )`);
+    } catch (_) {}
+
+    try {
+      db.exec(`CREATE TABLE IF NOT EXISTS user_tokens (
+        token TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL
+      )`);
+    } catch (_) {}
+
+    // Failure photos and reason tracking columns
+    try { db.exec('ALTER TABLE jobs ADD COLUMN failure_photo TEXT'); } catch (_) {}
+    try { db.exec('ALTER TABLE jobs ADD COLUMN failure_category TEXT'); } catch (_) {}
+    try { db.exec('ALTER TABLE jobs ADD COLUMN failure_notes TEXT'); } catch (_) {}
+    try { db.exec('ALTER TABLE printer_events ADD COLUMN photo_url TEXT'); } catch (_) {}
+    try { db.exec('ALTER TABLE printer_events ADD COLUMN username TEXT'); } catch (_) {}
+    try { db.exec('ALTER TABLE printers ADD COLUMN decommission_photo TEXT'); } catch (_) {}
+    try { db.exec('ALTER TABLE printers ADD COLUMN decommission_reason_category TEXT'); } catch (_) {}
+
+    // Seed default users if empty
+    try {
+      const { seedDefaultUsers } = require('./auth');
+      seedDefaultUsers(db);
+    } catch (e) {
+      console.error('[db] Error seeding users:', e.message);
+    }
+
     // Backfill decommission events
     try {
       const decomms = db.prepare(`

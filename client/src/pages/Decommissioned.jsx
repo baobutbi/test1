@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../useConfirm';
 import { useToast } from '../useToast';
+import { useAuth } from '../AuthContext';
+import ImageModal from '../components/ImageModal';
 
 function formatTimestamp(ms) {
   if (!ms) return 'Unknown';
@@ -13,6 +15,7 @@ function formatTimestamp(ms) {
 
 export default function Decommissioned() {
   const navigate = useNavigate();
+  const { canOperate } = useAuth();
   const [confirm, confirmModal] = useConfirm();
   const [showToast, toastEl]    = useToast();
 
@@ -21,6 +24,7 @@ export default function Decommissioned() {
   const [editingId, setEditingId] = useState(null);
   const [draftNote, setDraftNote] = useState('');
   const [saving, setSaving]       = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
   const fetchPrinters = useCallback(async () => {
     const res  = await fetch('/api/printers/decommissioned');
@@ -79,6 +83,10 @@ export default function Decommissioned() {
   }
 
   async function recommission(printer) {
+    if (!canOperate) {
+      showToast('Tài khoản Viewer chỉ có quyền xem, không thể thực hiện thao tác khôi phục máy.', 'error');
+      return;
+    }
     const result = await confirm({
       title: `Recommission ${printer.name}?`,
       message: 'Only proceed if the machine has been fully inspected and confirmed safe to run. It will return to the active fleet and be eligible to receive jobs immediately.',
@@ -128,9 +136,18 @@ export default function Decommissioned() {
             onSave={saveNote}
             onRecommission={() => recommission(printer)}
             onViewHistory={() => navigate(`/printers/${printer.id}`)}
+            onViewPhoto={(src, title) => setModalImage({ src, title })}
           />
         ))}
       </div>
+
+      {modalImage && (
+        <ImageModal
+          src={modalImage.src}
+          title={`Ảnh bản in lỗi — ${modalImage.title}`}
+          onClose={() => setModalImage(null)}
+        />
+      )}
 
       {confirmModal}
       {toastEl}
@@ -141,10 +158,12 @@ export default function Decommissioned() {
 function DecomCard({
   printer, isEditing, draftNote, saving,
   onBeginEdit, onCancelEdit, onChangeDraft, onSave,
-  onRecommission, onViewHistory,
+  onRecommission, onViewHistory, onViewPhoto,
 }) {
   const note = printer.decommission_note || '';
   const textareaRef = useRef(null);
+  const photo = printer.decommission_photo;
+  const category = printer.decommission_reason_category;
 
   // Auto-focus + place cursor at end when entering edit mode
   useEffect(() => {
@@ -200,11 +219,33 @@ function DecomCard({
             {printer.group_name && (
               <span style={{ fontSize: 11, color: '#475569' }}>{printer.group_name}</span>
             )}
+            {category && (
+              <span style={{
+                background: '#451a1a',
+                color: '#f87171',
+                border: '1px solid #7f1d1d',
+                borderRadius: 3,
+                padding: '1px 6px',
+                fontSize: 11,
+                fontWeight: 700,
+              }}>
+                Lỗi: {category}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Icon-style action buttons */}
         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          {photo && (
+            <button
+              onClick={() => onViewPhoto(photo, printer.name)}
+              title="Xem ảnh bản in lỗi (Click to view full image)"
+              style={iconBtn('#f87171', '#7f1d1d')}
+            >
+              📷
+            </button>
+          )}
           <button
             onClick={onRecommission}
             title="Recommission"
@@ -221,6 +262,51 @@ function DecomCard({
           </button>
         </div>
       </div>
+
+      {/* Failure photo preview thumbnail if present */}
+      {photo && (
+        <div
+          onClick={() => onViewPhoto(photo, printer.name)}
+          title="Bấm để phóng to ảnh lỗi"
+          style={{
+            cursor: 'pointer',
+            border: '1px solid #334155',
+            borderRadius: 6,
+            overflow: 'hidden',
+            background: '#0a0e17',
+            maxHeight: 120,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+          }}
+        >
+          <img
+            src={photo}
+            alt="Failure"
+            style={{
+              width: '100%',
+              maxHeight: 120,
+              objectFit: 'cover',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 4,
+              right: 6,
+              background: 'rgba(0,0,0,0.7)',
+              color: '#f87171',
+              padding: '2px 6px',
+              borderRadius: 4,
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            🔍 Bấm xem ảnh lỗi
+          </div>
+        </div>
+      )}
 
       {/* Decommission timestamp */}
       <div style={{ fontSize: 11, color: '#475569' }}>

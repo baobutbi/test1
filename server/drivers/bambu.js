@@ -40,9 +40,15 @@ function getOrCreateConnection(printer) {
     return connections.get(printer.id);
   }
 
-  const serial = printer.serial_number;
-  const conn   = { client: null, latestPrint: null, connected: false };
+  const conn = { client: null, latestPrint: null, connected: false };
   connections.set(printer.id, conn);
+
+  const isDemo = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+  if (isDemo) {
+    return conn;
+  }
+
+  const serial = printer.serial_number;
 
   const client = mqtt.connect(`mqtts://${printer.ip}:8883`, {
     username:          'bblp',
@@ -152,6 +158,16 @@ const BAMBU_USER_CANCELLED = 50348044;
 // status is a canonical string: IDLE | PRINTING | FINISHED | PAUSED | STOPPED | ERROR | OFFLINE | UNKNOWN
 // progress (0–100), timeRemaining (seconds), and currentFile are null when not printing.
 async function getStatus(printer) {
+  const isDemo = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+  if (isDemo) {
+    return {
+      status: printer.status || 'IDLE',
+      progress: printer.job_progress ?? null,
+      timeRemaining: printer.job_time_remaining ?? null,
+      currentFile: printer.job_name ?? null,
+    };
+  }
+
   if (!printer.serial_number) {
     // Misconfigured — serial number required for MQTT topics
     return { status: 'OFFLINE', progress: null, timeRemaining: null, currentFile: null };

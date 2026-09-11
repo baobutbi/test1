@@ -13,6 +13,16 @@ const fs = require('fs');
 // status is a canonical string: IDLE | PRINTING | FINISHED | PAUSED | ERROR | OFFLINE | READY | UNKNOWN
 // progress and timeRemaining are null when not printing.
 async function getStatus(printer) {
+  const isDemo = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+  if (isDemo) {
+    return {
+      status: printer.status || 'IDLE',
+      progress: printer.job_progress ?? null,
+      timeRemaining: printer.job_time_remaining ?? null,
+      currentFile: printer.job_name ?? null,
+    };
+  }
+
   try {
     const response = await axios.get(`http://${printer.ip}/api/v1/status`, {
       headers: { 'X-Api-Key': printer.api_key },

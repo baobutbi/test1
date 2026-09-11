@@ -18,13 +18,14 @@ module.exports = (db) => {
   router.post('/', (req, res) => {
     const printer = db.prepare('SELECT id FROM printers WHERE id = ?').get(req.params.id);
     if (!printer) return res.status(404).json({ error: 'Printer not found' });
-    const { note } = req.body;
+    const { note, photo_url } = req.body;
     if (!note || !note.trim()) {
       return res.status(400).json({ error: 'note is required' });
     }
+    const username = req.user ? (req.user.display_name || req.user.username) : null;
     const result = db.prepare(
-      'INSERT INTO printer_events (printer_id, event_type, note, created_at) VALUES (?, ?, ?, ?)'
-    ).run(req.params.id, 'note', note.trim(), Date.now());
+      'INSERT INTO printer_events (printer_id, event_type, note, photo_url, username, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(req.params.id, 'note', note.trim(), photo_url || null, username, Date.now());
     res.status(201).json(
       db.prepare('SELECT * FROM printer_events WHERE id = ?').get(result.lastInsertRowid)
     );

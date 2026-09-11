@@ -30,6 +30,16 @@ const STATE_MAP = {
 };
 
 async function getStatus(printer) {
+  const isDemo = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+  if (isDemo) {
+    return {
+      status: printer.status || 'IDLE',
+      progress: printer.job_progress ?? null,
+      timeRemaining: printer.job_time_remaining ?? null,
+      currentFile: printer.job_name ?? null,
+    };
+  }
+
   try {
     const res = await axios.get(
       `${base(printer)}/printer/objects/query`,

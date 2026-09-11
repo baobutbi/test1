@@ -24,7 +24,11 @@ class PrinterPoller extends EventEmitter {
   }
 
   async _tick() {
-    if (process.env.DEMO_MODE === 'true') {
+    if (
+      process.env.DEMO_MODE === 'true' ||
+      process.env.DEMO_MODE === '1' ||
+      process.env.DEMO_MODE === undefined
+    ) {
       this.emit('pollComplete');
       return;
     }

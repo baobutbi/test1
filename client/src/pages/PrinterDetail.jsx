@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
+import ImageModal from '../components/ImageModal';
 
 function formatTimestamp(ms) {
   if (!ms) return '—';
@@ -75,6 +77,7 @@ export default function PrinterDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const { user, canOperate }   = useAuth();
   const [printer, setPrinter]   = useState(null);
   const [events, setEvents]     = useState([]);
   const [stats, setStats]       = useState(null);
@@ -82,6 +85,10 @@ export default function PrinterDetail() {
   const [jobPage, setJobPage]   = useState(1);
   const [loading, setLoading]   = useState(true);
   const [note, setNote]         = useState('');
+  const [notePhoto, setNotePhoto] = useState(null);
+  const [notePhotoLoading, setNotePhotoLoading] = useState(false);
+  const noteFileInputRef        = useRef(null);
+  const [modalImage, setModalImage] = useState(null);
   const [saving, setSaving]     = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft]     = useState('');
@@ -124,16 +131,44 @@ export default function PrinterDetail() {
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { fetchJobPage(jobPage); }, [fetchJobPage, jobPage]);
 
+  async function handleNotePhotoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setNotePhotoLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await fetch('/api/uploads/image', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotePhoto(data.url);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setNotePhotoLoading(false);
+    }
+  }
+
   async function submitNote(e) {
     e.preventDefault();
-    if (!note.trim()) return;
+    if (!note.trim() && !notePhoto) return;
     setSaving(true);
     await fetch(`/api/printers/${id}/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ note: note.trim() }),
+      body: JSON.stringify({
+        note: note.trim(),
+        photo_url: notePhoto,
+        username: user?.display_name || user?.username,
+      }),
     });
     setNote('');
+    setNotePhoto(null);
+    if (noteFileInputRef.current) noteFileInputRef.current.value = '';
     setSaving(false);
     fetchData();
   }
@@ -526,35 +561,95 @@ export default function PrinterDetail() {
         background: '#131720', border: '1px solid #1e2433',
         borderRadius: 8, padding: '14px 18px', marginBottom: 24,
       }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>Add operator note</div>
-        <form onSubmit={submitNote} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <textarea
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            placeholder="Describe an observation, inspection result, or any relevant note…"
-            rows={2}
-            style={{
-              flex: 1,
-              background: '#1e2433', border: '1px solid #2d3748',
-              borderRadius: 5, color: '#e2e8f0', fontSize: 13,
-              padding: '7px 10px', resize: 'vertical', outline: 'none',
-              fontFamily: 'inherit',
-            }}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8' }}>Ghi chú kỹ thuật / Vận hành</div>
+          {!canOperate && (
+            <span style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>Quyền Viewer (chỉ xem)</span>
+          )}
+        </div>
+        <form onSubmit={submitNote} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <textarea
+              value={note}
+              disabled={!canOperate}
+              onChange={e => setNote(e.target.value)}
+              placeholder={canOperate ? "Mô tả kết quả kiểm tra, hiện tượng lỗi hoặc ghi chú bảo trì…" : "Tài khoản của bạn chỉ có quyền xem"}
+              rows={2}
+              style={{
+                flex: 1,
+                background: '#1e2433', border: '1px solid #2d3748',
+                borderRadius: 5, color: '#e2e8f0', fontSize: 13,
+                padding: '7px 10px', resize: 'vertical', outline: 'none',
+                fontFamily: 'inherit',
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <button
+                type="submit"
+                disabled={saving || (!note.trim() && !notePhoto) || !canOperate}
+                style={{
+                  background: saving || (!note.trim() && !notePhoto) || !canOperate ? '#1e2433' : '#1e40af',
+                  color: saving || (!note.trim() && !notePhoto) || !canOperate ? '#475569' : '#fff',
+                  border: 'none', borderRadius: 5,
+                  padding: '7px 16px', fontSize: 13, fontWeight: 600,
+                  cursor: saving || (!note.trim() && !notePhoto) || !canOperate ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {saving ? 'Đang lưu…' : 'Lưu ghi chú'}
+              </button>
+
+              {canOperate && (
+                <button
+                  type="button"
+                  onClick={() => noteFileInputRef.current?.click()}
+                  disabled={notePhotoLoading}
+                  style={{
+                    background: '#1e2433',
+                    color: '#94a3b8',
+                    border: '1px solid #334155',
+                    borderRadius: 5,
+                    padding: '5px 12px',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4,
+                  }}
+                >
+                  📷 {notePhotoLoading ? 'Đang tải...' : 'Đính kèm ảnh'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <input
+            type="file"
+            ref={noteFileInputRef}
+            onChange={handleNotePhotoUpload}
+            accept="image/*"
+            style={{ display: 'none' }}
           />
-          <button
-            type="submit"
-            disabled={saving || !note.trim()}
-            style={{
-              background: saving || !note.trim() ? '#1e2433' : '#1e40af',
-              color: saving || !note.trim() ? '#475569' : '#fff',
-              border: 'none', borderRadius: 5,
-              padding: '7px 16px', fontSize: 13, fontWeight: 600,
-              cursor: saving || !note.trim() ? 'not-allowed' : 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {saving ? 'Saving…' : 'Add Note'}
-          </button>
+
+          {notePhoto && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#1e2433', padding: '6px 10px', borderRadius: 6, width: 'fit-content' }}>
+              <img
+                src={notePhoto}
+                alt="Preview"
+                onClick={() => setModalImage({ src: notePhoto, title: 'Ảnh đính kèm ghi chú' })}
+                style={{ height: 44, width: 44, objectFit: 'cover', borderRadius: 4, cursor: 'pointer', border: '1px solid #334155' }}
+              />
+              <span style={{ fontSize: 12, color: '#4ade80' }}>Đã đính kèm ảnh thành công</span>
+              <button
+                type="button"
+                onClick={() => { setNotePhoto(null); if (noteFileInputRef.current) noteFileInputRef.current.value = ''; }}
+                style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+              >
+                Gỡ ảnh ✕
+              </button>
+            </div>
+          )}
         </form>
       </div>
 
@@ -580,9 +675,41 @@ export default function PrinterDetail() {
               <EventBadge type={ev.event_type} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: ev.note ? 4 : 2 }}>
+                {ev.failure_category && (
+                  <span style={{
+                    background: '#451a1a', color: '#f87171', border: '1px solid #7f1d1d',
+                    borderRadius: 3, padding: '1px 6px', fontSize: 11, fontWeight: 700
+                  }}>
+                    Lỗi: {ev.failure_category}
+                  </span>
+                )}
+                {ev.username && (
+                  <span style={{
+                    background: '#1e293b', color: '#94a3b8', borderRadius: 3,
+                    padding: '1px 6px', fontSize: 11
+                  }}>
+                    👤 {ev.username}
+                  </span>
+                )}
+              </div>
               {ev.note && (
                 <div style={{ fontSize: 13, color: '#cbd5e1', marginBottom: 4, wordBreak: 'break-word' }}>
                   {ev.note}
+                </div>
+              )}
+              {ev.photo_url && (
+                <div style={{ marginTop: 6, marginBottom: 4 }}>
+                  <img
+                    src={ev.photo_url}
+                    alt="Ảnh đính kèm"
+                    onClick={() => setModalImage({ src: ev.photo_url, title: `Sự kiện #${ev.id} - ${ev.event_type}` })}
+                    style={{
+                      maxHeight: 120, maxWidth: 200, objectFit: 'cover',
+                      borderRadius: 6, border: '1px solid #334155', cursor: 'pointer'
+                    }}
+                    title="Bấm xem ảnh đầy đủ"
+                  />
                 </div>
               )}
               <div style={{ fontSize: 11, color: '#475569' }}>{formatTimestamp(ev.created_at)}</div>
@@ -659,6 +786,14 @@ export default function PrinterDetail() {
             </div>
           )}
         </div>
+      )}
+
+      {modalImage && (
+        <ImageModal
+          src={modalImage.src}
+          title={modalImage.title}
+          onClose={() => setModalImage(null)}
+        />
       )}
     </div>
   );
