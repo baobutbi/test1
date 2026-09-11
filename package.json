@@ -1,0 +1,51 @@
+{
+  "name": "print-farm-manager",
+  "version": "1.0.0",
+  "description": "Centralized print farm management for multi-brand 3D printer fleets",
+  "author": "Joel Telling",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joeltelling/print-farm-manager.git"
+  },
+  "engines": {
+    "node": ">=22.0.0 <24"
+  },
+  "keywords": [
+    "3d-printing",
+    "print-farm",
+    "prusa",
+    "bambu",
+    "klipper",
+    "elegoo",
+    "self-hosted"
+  ],
+  "scripts": {
+    "dev": "npm run build --prefix client && node server/index.js",
+    "server": "node server/index.js",
+    "client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "start": "node server/index.js",
+    "lint": "node --check server/index.js server/db.js server/sqlite-adapter.js server/seed-demo.js",
+    "test": "jest --testPathPatterns=server/tests",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@sqlite.org/sqlite-wasm": "^3.53.4-build1",
+    "axios": "^1.7.2",
+    "basic-ftp": "^5.2.1",
+    "concurrently": "^8.2.2",
+    "express": "^4.19.2",
+    "form-data": "^4.0.5",
+    "mqtt": "^5.15.1",
+    "multer": "^2.2.0",
+    "papaparse": "^5.4.1",
+    "sdcp": "^0.5.4",
+    "sql.js": "^1.14.2"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0",
+    "patch-package": "^8.0.1",
+    "supertest": "^7.2.2"
+  }
+}

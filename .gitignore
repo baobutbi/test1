@@ -1,0 +1,11 @@
+node_modules/
+client/node_modules/
+server/gcode/
+server/data/
+dist/
+.env
+*.csv
+.claude/*
+!.claude/skills/
+*.docx
+server/data/backups/

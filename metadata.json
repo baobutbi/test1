@@ -1,0 +1,6 @@
+{
+  "name": "3DPN Print Farm Manager",
+  "description": "Centralized print farm management for multi-brand 3D printer fleets",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
