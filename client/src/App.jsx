@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
 import UserBar from './components/UserBar';
+import VingroupLogo, { VingroupEmblem } from './components/VingroupLogo';
 import Dashboard from './pages/Dashboard';
 import Fleet from './pages/Fleet';
 import Printers from './pages/Printers';
@@ -13,32 +14,35 @@ import Decommissioned from './pages/Decommissioned';
 import Users from './pages/Users';
 
 const NAV_ITEMS = [
-  { to: '/',               label: 'Dashboard' },
-  { to: '/fleet',          label: 'Fleet' },
-  { to: '/printers',       label: 'Printers',      end: true },
-  { to: '/projects',       label: 'Projects' },
-  { to: '/jobs',           label: 'Jobs' },
-  { to: '/decommissioned', label: 'Decommissioned' },
-  { to: '/users',          label: 'Users & Roles' },
-  { to: '/settings',       label: 'Settings' },
+  { to: '/',               label: 'Tổng quan (Dashboard)', icon: '📊' },
+  { to: '/fleet',          label: 'Hạm đội máy (Fleet)',   icon: '🖨️' },
+  { to: '/printers',       label: 'Danh mục Máy in',       icon: '⚙️', end: true },
+  { to: '/projects',       label: 'Dự án & Bản in',        icon: '📁' },
+  { to: '/jobs',           label: 'Lệnh in (Jobs Queue)',   icon: '📋' },
+  { to: '/decommissioned', label: 'Bảo trì / Ngừng dùng',  icon: '🛠️' },
+  { to: '/users',          label: 'Nhân sự & Phân quyền',  icon: '👥' },
+  { to: '/settings',       label: 'Cài đặt hệ thống',      icon: '🔧' },
 ];
 
 const navLinkStyle = ({ isActive }) => ({
-  display: 'block',
-  padding: '8px 14px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  padding: '9px 12px',
   borderRadius: 6,
-  color: isActive ? '#fff' : '#94a3b8',
-  background: isActive ? '#1e40af' : 'transparent',
+  color: isActive ? '#da251d' : '#475569',
+  background: isActive ? '#fef2f2' : 'transparent',
+  borderLeft: isActive ? '3px solid #da251d' : '3px solid transparent',
   textDecoration: 'none',
-  fontWeight: isActive ? 700 : 400,
-  fontSize: 14,
-  transition: 'background 0.15s',
+  fontWeight: isActive ? 700 : 500,
+  fontSize: 13.5,
+  transition: 'all 0.15s ease',
   whiteSpace: 'nowrap',
 });
 
 export default function App() {
   // Operator-configurable farm name (Settings → Farm Name)
-  const [farmName, setFarmName] = useState('Print Farm');
+  const [farmName, setFarmName] = useState('3D Vincons Window');
   useEffect(() => {
     fetch('/api/settings')
       .then(r => r.json())
@@ -57,10 +61,40 @@ export default function App() {
       <BrowserRouter>
         {/* Responsive layout: sidebar on desktop, top nav bar on mobile */}
         <style>{`
-          #layout { display: flex; min-height: 100vh; }
-          #sidebar { width: 210px; flex-shrink: 0; background: #131720; border-right: 1px solid #1e2433; display: flex; flex-direction: column; padding: 16px 10px; gap: 4px; justify-content: space-between; }
-          #topbar { display: none; background: #131720; border-bottom: 1px solid #1e2433; padding: 8px 12px; align-items: center; gap: 8px; flex-wrap: wrap; }
-          #main { flex: 1; padding: 24px 28px; overflow-y: auto; min-width: 0; }
+          #layout { display: flex; min-height: 100vh; background: #f8fafc; }
+          #sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            box-shadow: 1px 0 4px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            padding: 18px 12px;
+            gap: 4px;
+            justify-content: space-between;
+          }
+          #topbar {
+            display: none;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 14px;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+          }
+          #main {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+            min-width: 0;
+            background: #f8fafc;
+          }
+          .nav-item:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+          }
           @media (max-width: 600px) {
             #layout { flex-direction: column; }
             #sidebar { display: none; }
@@ -73,27 +107,39 @@ export default function App() {
           {/* Sidebar (desktop) */}
           <nav id="sidebar">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ padding: '0 6px 16px', borderBottom: '1px solid #1e2433', marginBottom: 8 }}>
-                <div style={{ fontWeight: 800, fontSize: 15, color: '#e2e8f0', lineHeight: 1.3 }}>{farmName}</div>
-                <div style={{ fontWeight: 400, fontSize: 11, color: '#475569' }}>Print Farm Manager</div>
+              {/* Brand Logo & Title */}
+              <div style={{ padding: '0 6px 16px', borderBottom: '1px solid #f1f5f9', marginBottom: 12 }}>
+                <VingroupLogo compact={false} showTagline={true} />
               </div>
-              {NAV_ITEMS.map((item) => (
-                <NavLink key={item.to} to={item.to} end={item.to === '/' || !!item.end} style={navLinkStyle}>
-                  {item.label}
-                </NavLink>
-              ))}
+
+              {/* Navigation Items */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {NAV_ITEMS.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === '/' || !!item.end}
+                    style={navLinkStyle}
+                    className="nav-item"
+                  >
+                    <span style={{ fontSize: 16 }}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
             </div>
 
-            <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid #1e2433' }}>
+            {/* User & RBAC Switcher Footer */}
+            <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
               <UserBar />
             </div>
           </nav>
 
           {/* Top nav bar (mobile) */}
           <nav id="topbar">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 6 }}>
-              <span style={{ fontWeight: 800, fontSize: 14, color: '#e2e8f0' }}>{farmName}</span>
-              <div style={{ width: 170 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 8 }}>
+              <VingroupLogo compact={true} showTagline={false} />
+              <div style={{ width: 160 }}>
                 <UserBar compact />
               </div>
             </div>
@@ -104,16 +150,21 @@ export default function App() {
                   to={item.to}
                   end={item.to === '/' || !!item.end}
                   style={({ isActive }) => ({
-                    padding: '5px 10px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '5px 9px',
                     borderRadius: 6,
-                    color: isActive ? '#fff' : '#94a3b8',
-                    background: isActive ? '#1e40af' : '#1e2433',
+                    color: isActive ? '#da251d' : '#475569',
+                    background: isActive ? '#fef2f2' : '#f1f5f9',
+                    border: isActive ? '1px solid #fecaca' : '1px solid #e2e8f0',
                     textDecoration: 'none',
-                    fontSize: 13,
-                    fontWeight: isActive ? 700 : 400,
+                    fontSize: 12,
+                    fontWeight: isActive ? 700 : 500,
                   })}
                 >
-                  {item.label}
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
                 </NavLink>
               ))}
             </div>

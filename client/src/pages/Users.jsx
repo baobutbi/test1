@@ -4,7 +4,7 @@ import { useToast } from '../useToast';
 import { useConfirm } from '../useConfirm';
 
 export default function Users() {
-  const { user, isAdmin, refreshDemoUsers, authFetch } = useAuth();
+  const { user, isAdmin, isDirector, canManageUsers, refreshDemoUsers, authFetch } = useAuth();
   const [showToast, toastEl] = useToast();
   const [confirm, confirmModal] = useConfirm();
 
@@ -81,7 +81,7 @@ export default function Users() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Cập nhật quyền thất bại');
 
-      showToast(`Đã đổi vai trò sang "${newRole.toUpperCase()}"`, 'success');
+      showToast(`Đã cập nhật vai trò người dùng thành công!`, 'success');
       fetchUsers();
       refreshDemoUsers();
     } catch (err) {
@@ -156,12 +156,26 @@ export default function Users() {
   const roleBadge = (role) => {
     switch (role) {
       case 'admin':
-        return { label: 'Admin (Quản trị)', bg: '#451a03', color: '#f59e0b', border: '#b45309' };
+        return { label: 'Admin (Quản trị)', bg: '#450a0a', color: '#f87171', border: '#dc2626', icon: '🛡️' };
+      case 'director':
+        return { label: 'Giám đốc Nhà máy', bg: '#431407', color: '#fb923c', border: '#ea580c', icon: '👔' };
+      case 'manager':
+        return { label: 'Quản đốc Xưởng', bg: '#451a03', color: '#fbbf24', border: '#d97706', icon: '🏭' };
+      case 'shift_leader':
+        return { label: 'Trưởng ca Sản xuất', bg: '#422006', color: '#fde047', border: '#ca8a04', icon: '⏱️' };
+      case 'supervisor':
+        return { label: 'Giám sát Sản xuất', bg: '#082f49', color: '#38bdf8', border: '#0284c7', icon: '🔍' };
+      case 'qc':
+        return { label: 'QC / KCS', bg: '#164e63', color: '#22d3ee', border: '#06b6d4', icon: '🎯' };
+      case 'technician':
+        return { label: 'Kỹ thuật viên', bg: '#2e1065', color: '#c084fc', border: '#8b5cf6', icon: '🔧' };
       case 'operator':
-        return { label: 'Operator (Vận hành)', bg: '#064e3b', color: '#34d399', border: '#059669' };
+        return { label: 'Nhân viên Vận hành', bg: '#064e3b', color: '#34d399', border: '#059669', icon: '🖨️' };
+      case 'post_processing':
+        return { label: 'Nhân viên Hậu kỳ', bg: '#500724', color: '#f472b6', border: '#ec4899', icon: '🎨' };
       case 'viewer':
       default:
-        return { label: 'Viewer (Chỉ xem)', bg: '#1e293b', color: '#94a3b8', border: '#475569' };
+        return { label: 'Viewer (Chỉ xem)', bg: '#1e293b', color: '#94a3b8', border: '#475569', icon: '👁️' };
     }
   };
 
@@ -172,14 +186,14 @@ export default function Users() {
 
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 6px 0', color: '#f8fafc' }}>
-          Quản lý Tài khoản & Phân quyền (Users & RBAC)
+          3D Vincons Window — Quản lý Nhân sự & Phân quyền Xưởng (RBAC)
         </h1>
         <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>
-          Quản lý danh sách người dùng, tạo tài khoản mới và thiết lập phân quyền (Admin, Operator, Viewer).
+          Hệ thống phân cấp 10 bậc nhân sự: Quản trị, Giám đốc, Quản đốc, Trưởng ca, Giám sát, QC, Kỹ thuật, Vận hành, Hậu kỳ và Giám sát chỉ xem.
         </p>
       </div>
 
-      {!isAdmin && (
+      {!canManageUsers && (
         <div
           style={{
             background: '#1e293b',
@@ -194,7 +208,7 @@ export default function Users() {
         >
           <span style={{ fontSize: 20 }}>ℹ️</span>
           <div style={{ fontSize: 13, color: '#e2e8f0' }}>
-            Bạn đang đăng nhập với quyền <strong>{user?.role?.toUpperCase()}</strong>. Để tạo tài khoản hoặc phân quyền người dùng khác, bạn có thể chuyển sang vai trò <strong>Admin</strong> ở thanh trên/bên.
+            Bạn đang đăng nhập với quyền <strong>{user?.role?.toUpperCase()}</strong>. Chỉ <strong>Admin</strong> hoặc <strong>Giám đốc Nhà máy</strong> mới có quyền tạo tài khoản hoặc phân quyền người dùng.
           </div>
         </div>
       )}
@@ -319,9 +333,16 @@ export default function Users() {
                   boxSizing: 'border-box',
                 }}
               >
-                <option value="operator">Operator — Kỹ thuật viên vận hành (Set Ready, Báo lỗi ảnh)</option>
-                <option value="viewer">Viewer — Người xem / Giám sát (Chỉ xem trạng thái)</option>
-                <option value="admin">Admin — Quản trị viên (Toàn quyền hệ thống)</option>
+                {isAdmin && <option value="admin">🛡️ Admin — Quản trị viên cao nhất</option>}
+                <option value="director">👔 Giám đốc Nhà máy — Toàn quyền điều hành (dưới Admin)</option>
+                <option value="manager">🏭 Quản đốc Xưởng — Kỹ thuật & Giám sát vận hành</option>
+                <option value="shift_leader">⏱️ Trưởng ca Sản xuất — Điều phối ca & Kỹ thuật</option>
+                <option value="supervisor">🔍 Giám sát Sản xuất — Theo dõi máy & tiến độ</option>
+                <option value="qc">🎯 QC / KCS — Kiểm định chất lượng & Báo lỗi in</option>
+                <option value="technician">🔧 Kỹ thuật viên — Bảo trì máy & Xử lý phần cứng</option>
+                <option value="operator">🖨️ Nhân viên Vận hành — Set Ready, nạp nhựa & Báo lỗi</option>
+                <option value="post_processing">🎨 Nhân viên Hậu kỳ — Xử lý sp & BÁO LỖI IN</option>
+                <option value="viewer">👁️ Viewer — Khách / Theo dõi (Chỉ xem)</option>
               </select>
             </div>
 
@@ -438,9 +459,10 @@ export default function Users() {
                       </td>
 
                       <td style={{ padding: '10px 10px' }}>
-                        {isAdmin ? (
+                        {canManageUsers && (!u.role === 'admin' || isAdmin) ? (
                           <select
                             value={u.role}
+                            disabled={!isAdmin && u.role === 'admin'}
                             onChange={(e) => handleRoleChange(u.id, e.target.value)}
                             style={{
                               background: b.bg,
@@ -454,9 +476,16 @@ export default function Users() {
                               outline: 'none',
                             }}
                           >
-                            <option value="admin">Admin</option>
-                            <option value="operator">Operator</option>
-                            <option value="viewer">Viewer</option>
+                            {isAdmin && <option value="admin">🛡️ Admin</option>}
+                            <option value="director">👔 Giám đốc NM</option>
+                            <option value="manager">🏭 Quản đốc</option>
+                            <option value="shift_leader">⏱️ Trưởng ca</option>
+                            <option value="supervisor">🔍 Giám sát</option>
+                            <option value="qc">🎯 QC / KCS</option>
+                            <option value="technician">🔧 Kỹ thuật</option>
+                            <option value="operator">🖨️ Vận hành</option>
+                            <option value="post_processing">🎨 Hậu kỳ</option>
+                            <option value="viewer">👁️ Viewer</option>
                           </select>
                         ) : (
                           <span
@@ -468,9 +497,12 @@ export default function Users() {
                               padding: '2px 8px',
                               fontSize: 11,
                               fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                           >
-                            {b.label}
+                            <span>{b.icon}</span> {b.label}
                           </span>
                         )}
                       </td>
@@ -510,7 +542,7 @@ export default function Users() {
                             Đổi mật khẩu
                           </button>
 
-                          {isAdmin && !isCurrent && (
+                          {canManageUsers && !isCurrent && (u.role !== 'admin' || isAdmin) && (
                             <>
                               <button
                                 onClick={() => handleStatusToggle(u)}
@@ -565,66 +597,170 @@ export default function Users() {
         }}
       >
         <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', margin: '0 0 6px 0' }}>
-          Ma trận phân quyền hệ thống (RBAC Matrix)
+          3D Vincons Window — Ma trận phân quyền 10 bậc nhân sự (RBAC Matrix)
         </h2>
         <p style={{ color: '#64748b', fontSize: 12, margin: '0 0 16px 0' }}>
-          So sánh quyền hạn chi tiết giữa các cấp độ tài khoản trong Print Farm Manager.
+          Chi tiết nhiệm vụ, phạm vi quyền hạn và thẩm quyền xử lý theo đúng cơ cấu nhà máy 3D Vincons Window.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
           {/* Admin Card */}
-          <div style={{ background: '#1a1824', border: '1px solid #b45309', borderRadius: 8, padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 18 }}>👑</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#f59e0b' }}>Admin (Quản trị viên)</span>
+          <div style={{ background: '#1a1012', border: '1px solid #dc2626', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>🛡️</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#f87171' }}>Admin (Quản trị hệ thống)</span>
             </div>
-            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 12 }}>
-              Toàn quyền cấu hình, vận hành và quản lý nhân sự trên toàn hệ thống.
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Toàn quyền cấu hình, vận hành, bảo mật và quản lý mọi tài khoản trong hệ thống.
             </p>
-            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#94a3b8', lineHeight: 1.7 }}>
-              <li>✓ Tạo, sửa, khóa và phân quyền tài khoản người dùng</li>
-              <li>✓ Thêm, cấu hình IP, chỉnh sửa và xóa máy in</li>
-              <li>✓ Vận hành in (Set Ready, Báo lỗi bản in & upload ảnh)</li>
-              <li>✓ Khôi phục máy in (Recommission) sau khi sửa chữa</li>
-              <li>✓ Tạo dự án, upload G-code, phân phối lệnh in</li>
-              <li>✓ Quản lý vật liệu, nhóm máy, sao lưu và khôi phục DB</li>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Tạo, phân quyền, khóa tài khoản Admin & Giám đốc</li>
+              <li>✓ Cấu hình bảo mật, xóa máy in, backup & restore DB</li>
+              <li>✓ Toàn quyền vận hành, duyệt in, báo lỗi, sửa chữa</li>
+            </ul>
+          </div>
+
+          {/* Director Card */}
+          <div style={{ background: '#1a1208', border: '1px solid #ea580c', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>👔</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#fb923c' }}>Giám đốc Nhà máy (Director)</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Quyền cao nhất dưới Admin: Điều hành toàn bộ nhà máy, duyệt sản xuất và nhân sự.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Quản lý danh sách nhân sự (Quản đốc, Trưởng ca, QC,...)</li>
+              <li>✓ Theo dõi KPI toàn bộ dàn máy, tiến độ đơn hàng và báo cáo lỗi</li>
+              <li>✓ Toàn quyền vận hành máy và phân bổ kế hoạch sản xuất</li>
+            </ul>
+          </div>
+
+          {/* Manager Card */}
+          <div style={{ background: '#191508', border: '1px solid #d97706', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>🏭</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#fbbf24' }}>Quản đốc Xưởng (Manager)</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Tập hợp quyền Kỹ thuật & Giám sát: Điều hành toàn diện máy in và xử lý sự cố xưởng.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Giám sát luồng in, điều phối máy, duyệt lệnh và nạp gcode</li>
+              <li>✓ Đưa máy vào bảo trì (Decommission) và khôi phục (Recommission)</li>
+              <li>✓ Xác nhận bản in tốt (Set Ready) & Xử lý báo cáo lỗi từ các bộ phận</li>
+            </ul>
+          </div>
+
+          {/* Shift Leader Card */}
+          <div style={{ background: '#181708', border: '1px solid #ca8a04', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>⏱️</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#fde047' }}>Trưởng ca Sản xuất (Shift Leader)</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Quyền như Quản đốc trong phạm vi ca trực: Đảm bảo sản lượng và xử lý sự cố trong ca.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Điều phối nhân viên vận hành và hậu kỳ trong ca trực</li>
+              <li>✓ Xử lý máy in gặp sự cố, gán lệnh in (Link Job), Recommission</li>
+              <li>✓ Báo lỗi bản in, nghiệm thu sản phẩm cuối ca</li>
+            </ul>
+          </div>
+
+          {/* Supervisor Card */}
+          <div style={{ background: '#0a1622', border: '1px solid #0284c7', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>🔍</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#38bdf8' }}>Giám sát Sản xuất (Supervisor)</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Theo dõi và kiểm soát tiến độ in, nhiệt độ, camera và tình trạng dàn máy theo thời gian thực.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Theo dõi trực quan trạng thái máy, phát hiện máy dừng bất thường</li>
+              <li>✓ Có quyền báo lỗi bản in (Bad Print) và tải ảnh lỗi khi phát hiện</li>
+              <li>✓ Đôn đốc tiến độ đơn hàng và nhắc nhở giải phóng bàn in</li>
+            </ul>
+          </div>
+
+          {/* QC / KCS Card */}
+          <div style={{ background: '#081a1f', border: '1px solid #06b6d4', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>🎯</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#22d3ee' }}>Nhân viên QC / KCS</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Quyền như Giám sát, chuyên trách kiểm tra chất lượng bản in và phân loại phế phẩm.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Kiểm định kích thước, bề mặt, độ kết dính lớp in</li>
+              <li>✓ Báo lỗi bản in & upload ảnh lỗi chi tiết để lưu hồ sơ KCS</li>
+              <li>✓ Theo dõi tỷ lệ lỗi theo nguyên nhân (bung bàn, lệch lớp, sợi rối)</li>
+            </ul>
+          </div>
+
+          {/* Technician Card */}
+          <div style={{ background: '#160c24', border: '1px solid #8b5cf6', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>🔧</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#c084fc' }}>Nhân viên Kỹ thuật (Technician)</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Chuyên trách phần cứng: Bảo trì định kỳ, sửa chữa đầu phun, thay linh kiện máy in.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Đưa máy hỏng vào bảo trì (Decommission) và ghi log kỹ thuật</li>
+              <li>✓ Khôi phục máy (Recommission) sau khi sửa chữa xong</li>
+              <li>✓ Cân chỉnh bàn in (Z-offset, Bed leveling), test gcode</li>
             </ul>
           </div>
 
           {/* Operator Card */}
-          <div style={{ background: '#0e1f1c', border: '1px solid #059669', borderRadius: 8, padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 18 }}>🛠️</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#34d399' }}>Operator (Kỹ thuật viên vận hành)</span>
+          <div style={{ background: '#0b1d16', border: '1px solid #059669', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>🖨️</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>Nhân viên Vận hành (Operator)</span>
             </div>
-            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 12 }}>
-              Dành cho kỹ thuật viên tại xưởng in trực tiếp thao tác với máy và bản in.
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Trực tiếp đứng xưởng: Nạp nhựa, lấy bản in, làm sạch bàn in và chạy máy.
             </p>
-            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#94a3b8', lineHeight: 1.7 }}>
-              <li>✓ Xác nhận bản in tốt (Set Ready) và bàn giao máy</li>
-              <li>✓ Báo lỗi bản in (Bad Print) kèm chụp/upload ảnh lỗi thực tế</li>
-              <li>✓ Gắn lệnh in thủ công (Link Job) và khôi phục máy (Recommission)</li>
-              <li>✓ Nạp file G-code, theo dõi tiến độ in thời gian thực</li>
-              <li>✗ Không thể xóa máy in hoặc thay đổi cài đặt bảo mật trang trại</li>
-              <li>✗ Không thể sửa phân quyền hoặc xóa tài khoản người khác</li>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Xác nhận bàn in sạch & bấm Set Ready bàn giao máy</li>
+              <li>✓ Báo lỗi in ngay khi phát hiện rối sợi hoặc bung bàn</li>
+              <li>✓ Tải ảnh lỗi bản in trực tiếp từ điện thoại hoặc máy tính</li>
+            </ul>
+          </div>
+
+          {/* Post Processing Card */}
+          <div style={{ background: '#1c0a15', border: '1px solid #ec4899', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>🎨</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#f472b6' }}>Nhân viên Hậu kỳ (Post-Processing)</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Xử lý sản phẩm sau in: Gỡ support, mài nhám, sơn phủ và ĐẶC BIỆT BÁO LỖI IN.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Phát hiện lỗi ẩn sau khi gỡ support (nứt lớp, biến dạng, khuyết tật)</li>
+              <li>✓ Quyền Báo lỗi in & Chụp/Upload ảnh lỗi thực tế ngay lập tức</li>
+              <li>✓ Hệ thống tự động hoàn bù sản lượng để farm in bù sản phẩm</li>
             </ul>
           </div>
 
           {/* Viewer Card */}
-          <div style={{ background: '#141824', border: '1px solid #334155', borderRadius: 8, padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ background: '#141824', border: '1px solid #334155', borderRadius: 8, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <span style={{ fontSize: 18 }}>👁️</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#94a3b8' }}>Viewer (Giám sát / Khách)</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#94a3b8' }}>Viewer (Khách / Giám sát xem)</span>
             </div>
-            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 12 }}>
-              Dành cho quản lý, khách hàng hoặc kiểm toán viên chỉ cần theo dõi tiến độ.
+            <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.5, marginBottom: 8 }}>
+              Dành cho khách tham quan hoặc đối tác theo dõi tiến độ đơn hàng.
             </p>
-            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#94a3b8', lineHeight: 1.7 }}>
-              <li>✓ Xem dashboard tổng quan, tỷ lệ hoàn thành dự án</li>
-              <li>✓ Theo dõi danh sách máy in, nhiệt độ, camera (nếu có)</li>
-              <li>✓ Xem danh sách lệnh in và xem ảnh phóng to các bản in lỗi</li>
-              <li>✓ Xem lịch sử sự kiện (Event History) của từng máy in</li>
-              <li>✗ Khóa toàn bộ các nút thao tác (Set Ready, Báo lỗi, Xóa...)</li>
+            <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
+              <li>✓ Xem dashboard tổng thể và tiến độ sản lượng thời gian thực</li>
+              <li>✓ Xem danh sách máy in, xem ảnh sản phẩm và ảnh lỗi</li>
+              <li>✗ Bị vô hiệu hóa toàn bộ các nút thao tác can thiệp vận hành</li>
             </ul>
           </div>
         </div>

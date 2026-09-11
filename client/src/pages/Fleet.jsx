@@ -8,17 +8,17 @@ import { useAuth } from '../AuthContext';
 import FailModal from '../components/FailModal';
 
 const STATUS_COLORS = {
-  PRINTING:   { bg: '#1e3a5f', text: '#60a5fa', label: 'Printing' },
-  UPLOADING:  { bg: '#3b2c69', text: '#a78bfa', label: 'Uploading' },
-  IDLE:       { bg: '#1f2937', text: '#6b7280', label: 'Idle' },
-  READY:      { bg: '#1f2937', text: '#94a3b8', label: 'Ready' },
-  FINISHED:   { bg: '#14532d', text: '#86efac', label: 'Finished' },
-  STOPPED:    { bg: '#431407', text: '#fb923c', label: 'Stopped' },
-  PAUSED:     { bg: '#78350f', text: '#fbbf24', label: 'Paused' },
-  ATTENTION:  { bg: '#78350f', text: '#fbbf24', label: 'Attention' },
-  ERROR:      { bg: '#7f1d1d', text: '#f87171', label: 'Error' },
-  OFFLINE:    { bg: '#1f2937', text: '#6b7280', label: 'Offline' },
-  UNKNOWN:    { bg: '#1f2937', text: '#9ca3af', label: 'Unknown' },
+  PRINTING:   { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe', label: 'Đang in' },
+  UPLOADING:  { bg: '#faf5ff', text: '#7e22ce', border: '#e9d5ff', label: 'Đang tải file' },
+  IDLE:       { bg: '#f8fafc', text: '#475569', border: '#e2e8f0', label: 'Sẵn sàng' },
+  READY:      { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0', label: 'Sẵn sàng' },
+  FINISHED:   { bg: '#ecfdf5', text: '#15803d', border: '#a7f3d0', label: 'Đã xong' },
+  STOPPED:    { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', label: 'Tạm dừng' },
+  PAUSED:     { bg: '#fffbeb', text: '#b45309', border: '#fde68a', label: 'Tạm ngưng' },
+  ATTENTION:  { bg: '#fffbeb', text: '#b45309', border: '#fde68a', label: 'Chú ý' },
+  ERROR:      { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', label: 'Lỗi' },
+  OFFLINE:    { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1', label: 'Mất kết nối' },
+  UNKNOWN:    { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1', label: 'Chưa rõ' },
 };
 
 const KNOWN_STATUSES = new Set(Object.keys(STATUS_COLORS));
@@ -57,7 +57,7 @@ function formatEta(secs) {
   return `done ${time}`;
 }
 
-function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint, onUploadFailed, onDecommission, onLinkJob, onOpenDetail }) {
+function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint, onUploadFailed, onDecommission, onLinkJob, onOpenDetail, canOperate, canReportFailure, canManagePrinters }) {
   const shownStatus = displayStatus(printer);
   const style = statusStyle(shownStatus);
   const isUploading = shownStatus === 'UPLOADING';
@@ -108,17 +108,18 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
   const eta      = isPrinting ? formatEta(printer.job_time_remaining) : null;
 
   function cardBorder() {
-    if (needsOfflineConfirmation || needsUploadConfirmation) return '#92400e';
-    if (needsConfirmation) return selected ? '#22c55e' : '#15803d';
-    return style.bg;
+    if (selected) return '#da251d';
+    if (needsOfflineConfirmation || needsUploadConfirmation) return '#fde68a';
+    if (needsConfirmation) return '#bbf7d0';
+    return '#e2e8f0';
   }
 
   return (
     <div
       onClick={(needsConfirmation && !needsUploadConfirmation) ? () => onToggleSelect(printer.id) : () => onOpenDetail(printer.id)}
-      title={(needsConfirmation && !needsUploadConfirmation) ? (selected ? 'Click to deselect' : 'Click to select for batch Set Ready') : 'Click to open printer details'}
+      title={(needsConfirmation && !needsUploadConfirmation) ? (selected ? 'Click để bỏ chọn' : 'Click để chọn xác nhận Set Ready hàng loạt') : 'Click để xem chi tiết máy in'}
       style={{
-        background: (needsOfflineConfirmation || needsUploadConfirmation) ? '#2a1f0e' : needsConfirmation ? '#1c2a1c' : '#1e2433',
+        background: (needsOfflineConfirmation || needsUploadConfirmation) ? '#fffbeb' : needsConfirmation ? '#f0fdf4' : '#ffffff',
         border: `${selected ? '2px' : '1px'} solid ${cardBorder()}`,
         borderRadius: 8,
         padding: selected ? '11px 13px' : '12px 14px',
@@ -127,26 +128,28 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
         gap: 6,
         minWidth: 0,
         cursor: 'pointer',
+        boxShadow: selected ? '0 0 0 2px rgba(218, 37, 29, 0.15)' : '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'all 0.15s ease',
       }}
     >
       {/* Name + status badge */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {printer.name}
         </span>
-        <span style={{ background: style.bg, color: style.text, borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+        <span style={{ background: style.bg, color: style.text, border: `1px solid ${style.border}`, borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
           {style.label}
         </span>
       </div>
 
       {/* Model + group */}
       <div style={{ fontSize: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ background: '#0f172a', borderRadius: 3, padding: '1px 6px', fontFamily: 'monospace', color: '#64748b' }}>
+        <span style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 3, padding: '1px 6px', fontFamily: 'monospace', color: '#475569', fontWeight: 600 }}>
           {printer.model}
         </span>
-        {printer.group_name && <span style={{ color: '#475569' }}>{printer.group_name}</span>}
+        {printer.group_name && <span style={{ color: '#64748b' }}>{printer.group_name}</span>}
         {(printer.loaded_material || printer.loaded_color) && (
-          <span style={{ color: '#7dd3fc', fontSize: 11 }}>
+          <span style={{ color: '#0284c7', fontSize: 11, fontWeight: 600 }}>
             {[printer.loaded_material, printer.loaded_color].filter(Boolean).join(' · ')}
           </span>
         )}
@@ -157,15 +160,15 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
         <div style={{ marginTop: 2 }}>
           {printer.uploading_job_name && (
             <div style={{
-              fontSize: 11, color: '#94a3b8', fontFamily: 'monospace',
+              fontSize: 11, color: '#64748b', fontFamily: 'monospace',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               marginBottom: 5,
             }}>
               {printer.uploading_job_name}
             </div>
           )}
-          <div style={{ fontSize: 11, color: '#a78bfa' }}>
-            Sending file to printer…
+          <div style={{ fontSize: 11, color: '#7e22ce', fontWeight: 600 }}>
+            Đang nạp file gcode xuống máy in…
           </div>
         </div>
       )}
@@ -175,28 +178,28 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
         <div style={{ marginTop: 2 }}>
           {printer.job_name && (
             <div style={{
-              fontSize: 11, color: '#94a3b8', fontFamily: 'monospace',
+              fontSize: 11, color: '#475569', fontFamily: 'monospace',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               marginBottom: 5,
             }}>
               {printer.job_name}
             </div>
           )}
-          <div style={{ background: '#0f172a', borderRadius: 3, height: 8, overflow: 'hidden', marginBottom: 4 }}>
+          <div style={{ background: '#e2e8f0', borderRadius: 3, height: 8, overflow: 'hidden', marginBottom: 4 }}>
             <div style={{
-              background: '#3b82f6',
+              background: '#2563eb',
               height: '100%',
               width: `${pct ?? 0}%`,
               borderRadius: 3,
               transition: 'width 0.5s',
             }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#475569' }}>
-            <span>{pct != null ? `${pct}%` : '—'}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b' }}>
+            <span style={{ fontWeight: 700, color: '#2563eb' }}>{pct != null ? `${pct}%` : '—'}</span>
             {timeLeft && (
               <span>
                 {timeLeft}
-                {eta && <span style={{ color: '#64748b' }}> · {eta}</span>}
+                {eta && <span style={{ color: '#94a3b8' }}> · {eta}</span>}
               </span>
             )}
           </div>
@@ -204,10 +207,10 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
       )}
 
       {printer.status === 'STOPPED' && (
-        <div style={{ fontSize: 11, color: '#fb923c', marginTop: 4 }}>
+        <div style={{ fontSize: 11, color: '#c2410c', marginTop: 4 }}>
           {needsConfirmation
-            ? 'Print stopped from printer screen — confirm outcome below to resume'
-            : 'Print stopped from printer screen — returns to service on next dispatch'}
+            ? 'Máy in bị dừng giữa chừng — xác nhận nghiệm thu bên dưới để tiếp tục'
+            : 'Máy in dừng — sẽ tự phục hồi khi có lệnh in tiếp theo'}
         </div>
       )}
 
@@ -215,7 +218,7 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
         <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
           {printer.last_parts_per_plate != null && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: 11, color: '#64748b' }}>Good:</span>
+              <span style={{ fontSize: 11, color: '#475569', fontWeight: 600 }}>Đạt:</span>
               <input
                 type="number"
                 min={0}
@@ -223,28 +226,50 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
                 value={confirmedQty}
                 onChange={e => setConfirmedQty(e.target.value)}
                 style={{
-                  width: 46, background: '#0f172a', border: '1px solid #2d3748',
-                  borderRadius: 3, padding: '2px 5px', color: '#e2e8f0', fontSize: 12,
-                  textAlign: 'center',
+                  width: 46, background: '#ffffff', border: '1px solid #cbd5e1',
+                  borderRadius: 3, padding: '2px 5px', color: '#0f172a', fontSize: 12,
+                  textAlign: 'center', fontWeight: 700,
                 }}
               />
-              <span style={{ fontSize: 11, color: '#475569' }}>/ {printer.last_parts_per_plate}</span>
+              <span style={{ fontSize: 11, color: '#64748b' }}>/ {printer.last_parts_per_plate} cái</span>
             </div>
           )}
           <div style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => onSetReady(printer.id, printer.last_parts_per_plate != null ? parseInt(confirmedQty, 10) : null)}
-              title="Confirm the print was good — credits the part count and returns this printer to the dispatch queue"
-              style={{ flex: 1, background: '#166534', color: '#4ade80', border: 'none', borderRadius: 6, padding: '5px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              disabled={!canOperate}
+              title={canOperate ? "Xác nhận bản in tốt — cộng sản lượng và giải phóng máy in" : "Bạn không có quyền Set Ready (Cần quyền Vận hành trở lên)"}
+              style={{
+                flex: 1,
+                background: canOperate ? '#16a34a' : '#f1f5f9',
+                color: canOperate ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 0',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: canOperate ? 'pointer' : 'not-allowed'
+              }}
             >
               ✓ Set Ready
             </button>
             <button
               onClick={() => onBadPrint(printer.id)}
-              title="Mark the print as failed — no parts are credited; the job re-queues so it can print again"
-              style={{ flex: 1, background: '#7f1d1d', color: '#f87171', border: 'none', borderRadius: 6, padding: '5px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              disabled={!canReportFailure}
+              title={canReportFailure ? "Báo lỗi bản in & chụp/upload ảnh lỗi thực tế" : "Bạn không có quyền báo lỗi bản in"}
+              style={{
+                flex: 1,
+                background: canReportFailure ? '#da251d' : '#f1f5f9',
+                color: canReportFailure ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 0',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: canReportFailure ? 'pointer' : 'not-allowed'
+              }}
             >
-              ✗ Bad Print
+              ✗ Báo lỗi in
             </button>
           </div>
         </div>
@@ -252,21 +277,43 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
 
       {needsOfflineConfirmation && (
         <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 4 }}>
-          <div style={{ fontSize: 11, color: '#f59e0b', marginBottom: 6 }}>
-            Went offline with a job in progress. If it comes back printing, this clears automatically.
+          <div style={{ fontSize: 11, color: '#b45309', marginBottom: 6 }}>
+            Mất kết nối khi đang in dở. Nếu máy kết nối lại và in, cảnh báo này sẽ tự tắt.
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => onSetReady(printer.id, null)}
-              style={{ flex: 1, background: '#166534', color: '#4ade80', border: 'none', borderRadius: 6, padding: '5px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              disabled={!canOperate}
+              style={{
+                flex: 1,
+                background: canOperate ? '#16a34a' : '#f1f5f9',
+                color: canOperate ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 0',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: canOperate ? 'pointer' : 'not-allowed'
+              }}
             >
-              ✓ Job OK
+              ✓ In thành công
             </button>
             <button
               onClick={() => onBadPrint(printer.id)}
-              style={{ flex: 1, background: '#7f1d1d', color: '#f87171', border: 'none', borderRadius: 6, padding: '5px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              disabled={!canReportFailure}
+              style={{
+                flex: 1,
+                background: canReportFailure ? '#da251d' : '#f1f5f9',
+                color: canReportFailure ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 0',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: canReportFailure ? 'pointer' : 'not-allowed'
+              }}
             >
-              ✗ Job Failed
+              ✗ Báo lỗi in
             </button>
           </div>
         </div>
@@ -274,47 +321,120 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
 
       {needsUploadConfirmation && (
         <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 4 }}>
-          <div style={{ fontSize: 11, color: '#f59e0b', marginBottom: 6 }}>
+          <div style={{ fontSize: 11, color: '#b45309', marginBottom: 6 }}>
             {(printer.status === 'FINISHED' || printer.status === 'IDLE')
-              ? 'Upload failed — but printer shows job complete. Did the print succeed?'
-              : 'Upload failed after retries — check the printer. Is it actually printing?'}
+              ? 'Tải file lỗi — máy báo đã xong. Bản in có thành công không?'
+              : 'Tải file lỗi sau nhiều lần thử — kiểm tra máy xem có đang in không?'}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => (printer.status === 'FINISHED' || printer.status === 'IDLE')
                 ? onSetReady(printer.id, null)
                 : onLinkJob(printer.id, true)}
-              style={{ flex: 1, background: '#166534', color: '#4ade80', border: 'none', borderRadius: 6, padding: '5px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              disabled={!canOperate}
+              style={{
+                flex: 1,
+                background: canOperate ? '#16a34a' : '#f1f5f9',
+                color: canOperate ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 0',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: canOperate ? 'pointer' : 'not-allowed'
+              }}
             >
-              {(printer.status === 'FINISHED' || printer.status === 'IDLE') ? '✓ Set Ready' : '✓ Job Running'}
+              {(printer.status === 'FINISHED' || printer.status === 'IDLE') ? '✓ Set Ready' : '✓ Máy đang in'}
             </button>
             <button
               onClick={() => onUploadFailed(printer.id)}
-              style={{ flex: 1, background: '#7f1d1d', color: '#f87171', border: 'none', borderRadius: 6, padding: '5px 0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              disabled={!canReportFailure}
+              style={{
+                flex: 1,
+                background: canReportFailure ? '#da251d' : '#f1f5f9',
+                color: canReportFailure ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 0',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: canReportFailure ? 'pointer' : 'not-allowed'
+              }}
             >
-              ✗ Upload Failed
+              ✗ Tải thất bại
             </button>
           </div>
         </div>
       )}
 
-      {isPrinting && printer.has_printing_job === 0 && (
-        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2 }}>
-          <button
-            onClick={() => onLinkJob(printer.id, false)}
-            title="Stalled upload? Tell the system which queued job is actually printing on this machine so tracking stays correct"
-            style={{ background: 'none', color: '#60a5fa', border: '1px solid #1e3a5f', borderRadius: 6, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}
-          >
-            Link Job
-          </button>
+      {isPrinting && (
+        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 4, display: 'flex', gap: 6 }}>
+          {canReportFailure && (
+            <button
+              onClick={() => onBadPrint(printer.id)}
+              title="Phát hiện bản in lỗi trong lúc in (rối sợi, lệch lớp, bung bàn) — Báo lỗi & Chụp ảnh lỗi"
+              style={{
+                flex: 1,
+                background: '#fef2f2',
+                color: '#b91c1c',
+                border: '1px solid #fecaca',
+                borderRadius: 6,
+                padding: '4px 8px',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4
+              }}
+            >
+              <span>📸</span> Báo lỗi in
+            </button>
+          )}
+          {printer.has_printing_job === 0 && (
+            <button
+              onClick={() => onLinkJob(printer.id, false)}
+              title="Stalled upload? Gán lệnh in đã có cho máy"
+              style={{ background: '#ffffff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 6, padding: '4px 8px', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
+            >
+              Link Job
+            </button>
+          )}
         </div>
       )}
 
       {!isPrinting && (
-        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2 }}>
-          <button onClick={() => onDecommission(printer.id, (needsConfirmation && printer.last_parts_per_plate != null) ? parseInt(confirmedQty, 10) : null)} style={{ background: 'none', color: '#475569', border: '1px solid #2d3748', borderRadius: 6, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}>
-            Decommission
-          </button>
+        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 4, display: 'flex', gap: 6, alignItems: 'center' }}>
+          {!needsConfirmation && canReportFailure && (
+            <button
+              onClick={() => onBadPrint(printer.id)}
+              title="Báo lỗi bản in gần nhất trên máy này & Tải ảnh lỗi KCS"
+              style={{
+                background: '#ffffff',
+                color: '#da251d',
+                border: '1px solid #fecaca',
+                borderRadius: 6,
+                padding: '4px 8px',
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+              }}
+            >
+              <span>📸</span> Báo lỗi
+            </button>
+          )}
+          {canManagePrinters && (
+            <button
+              onClick={() => onDecommission(printer.id, (needsConfirmation && printer.last_parts_per_plate != null) ? parseInt(confirmedQty, 10) : null)}
+              style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: 6, padding: '4px 8px', fontSize: 11, cursor: 'pointer', marginLeft: 'auto', fontWeight: 600 }}
+            >
+              Bảo trì
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -323,7 +443,7 @@ function PrinterCard({ printer, selected, onToggleSelect, onSetReady, onBadPrint
 
 export default function Fleet() {
   const navigate                              = useNavigate();
-  const { user, canOperate }                  = useAuth();
+  const { user, canOperate, canReportFailure, canManagePrinters, isDirector, isQC, isPostProcessing } = useAuth();
   const [confirm, confirmModal]               = useConfirm();
   const [showToast, toastEl]                  = useToast();
   const [printers, setPrinters]               = useState([]);
@@ -535,8 +655,8 @@ export default function Fleet() {
   }
 
   function badPrint(printerId) {
-    if (!canOperate) {
-      showToast('Tài khoản Viewer chỉ có quyền xem, không thể thực hiện thao tác này.', 'error');
+    if (!canReportFailure) {
+      showToast('Tài khoản của bạn không có quyền báo lỗi bản in.', 'error');
       return;
     }
     const printer = printers.find(p => p.id === printerId);
@@ -546,8 +666,8 @@ export default function Fleet() {
   }
 
   function uploadFailed(printerId) {
-    if (!canOperate) {
-      showToast('Tài khoản Viewer chỉ có quyền xem, không thể thực hiện thao tác này.', 'error');
+    if (!canReportFailure) {
+      showToast('Tài khoản của bạn không có quyền báo lỗi bản in.', 'error');
       return;
     }
     const printer = printers.find(p => p.id === printerId);
@@ -625,16 +745,16 @@ export default function Fleet() {
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background: '#1e2433', border: '1px solid #2d3748', borderRadius: 8, padding: 24, width: 480, maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto' }}
+            style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 24, width: 480, maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
           >
-            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Link Job — {linkJobModal.printerName}</div>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4, color: '#0f172a' }}>Liên kết lệnh in — {linkJobModal.printerName}</div>
             <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
-              Select the job currently running on this machine.
+              Chọn lệnh in thực tế đang chạy trên máy này.
             </div>
 
             {linkJobModal.jobs.length === 0 ? (
               <div style={{ fontSize: 13, color: '#94a3b8', padding: '12px 0' }}>
-                No failed or stalled jobs found for this printer's model.
+                Không tìm thấy lệnh in nào bị lỗi hoặc dừng cho dòng máy này.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -643,18 +763,18 @@ export default function Fleet() {
                     key={job.id}
                     onClick={() => setLinkJobModal(m => ({ ...m, selectedJobId: job.id }))}
                     style={{
-                      background: linkJobModal.selectedJobId === job.id ? '#1e3a5f' : '#0f172a',
-                      border: `1px solid ${linkJobModal.selectedJobId === job.id ? '#3b82f6' : '#2d3748'}`,
+                      background: linkJobModal.selectedJobId === job.id ? '#eff6ff' : '#f8fafc',
+                      border: `1px solid ${linkJobModal.selectedJobId === job.id ? '#3b82f6' : '#e2e8f0'}`,
                       borderRadius: 6,
                       padding: '10px 12px',
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{job.part_name}</div>
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, color: '#0f172a' }}>{job.part_name}</div>
                     <div style={{ fontSize: 11, color: '#64748b', fontFamily: 'monospace', marginBottom: 4 }}>{job.gcode_filename}</div>
                     <div style={{ fontSize: 11, color: '#475569' }}>
                       Job #{job.id} · {job.status}
-                      {job.original_printer_name ? ` · was on ${job.original_printer_name}` : ''}
+                      {job.original_printer_name ? ` · máy cũ ${job.original_printer_name}` : ''}
                     </div>
                   </div>
                 ))}
@@ -664,24 +784,24 @@ export default function Fleet() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
               <button
                 onClick={() => setLinkJobModal(null)}
-                style={{ background: '#1e2433', color: '#94a3b8', border: '1px solid #2d3748', borderRadius: 6, padding: '6px 16px', fontSize: 13, cursor: 'pointer' }}
+                style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: 6, padding: '6px 16px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
               >
-                Cancel
+                Hủy bỏ
               </button>
               {linkJobModal.isHeld && !linkJobModal.selectedJobId && (
                 <button
                   onClick={submitLinkJob}
-                  style={{ background: '#166534', color: '#4ade80', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: 13, cursor: 'pointer' }}
+                  style={{ background: '#16a34a', color: '#ffffff', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
                 >
-                  Release Hold
+                  Giải phóng máy
                 </button>
               )}
               {linkJobModal.selectedJobId && (
                 <button
                   onClick={submitLinkJob}
-                  style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  style={{ background: '#da251d', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
                 >
-                  Link Job
+                  Liên kết lệnh in
                 </button>
               )}
             </div>
@@ -690,23 +810,23 @@ export default function Fleet() {
       )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Fleet</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, color: '#0f172a' }}>Giám sát Dàn máy in (Fleet)</h1>
           <PollTimer lastPolled={lastPolled} intervalMs={15000} />
         </div>
         <button
           onClick={sweep}
-          title="Manually trigger job dispatch now. This normally happens automatically — use it to start jobs on idle machines without waiting for the next cycle."
-          style={{ background: '#1e2433', color: '#94a3b8', border: '1px solid #2d3748', borderRadius: 6, padding: '5px 14px', fontSize: 13, cursor: 'pointer' }}
+          title="Kích hoạt phân bổ lệnh in ngay lập tức"
+          style={{ background: '#ffffff', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
-          Sweep for Jobs
+          🔄 Quét & Điều phối lệnh in
         </button>
       </div>
 
       {/* Offline-with-job banner */}
       {awaitingOfflineReview.length > 0 && (
         <div style={{
-          background: '#292113',
-          border: '1px solid #92400e',
+          background: '#fffbeb',
+          border: '1px solid #fde68a',
           borderRadius: 8,
           padding: '10px 16px',
           marginBottom: 16,
@@ -714,11 +834,11 @@ export default function Fleet() {
           alignItems: 'center',
           gap: 12,
         }}>
-          <span style={{ color: '#fbbf24', fontWeight: 600, fontSize: 14 }}>
-            {awaitingOfflineReview.length} printer{awaitingOfflineReview.length !== 1 ? 's' : ''} went offline with a job in progress
+          <span style={{ color: '#b45309', fontWeight: 700, fontSize: 14 }}>
+            ⚠️ {awaitingOfflineReview.length} máy in mất kết nối khi đang in dở
           </span>
-          <span style={{ color: '#78350f', fontSize: 13 }}>
-            — will auto-clear if they come back printing
+          <span style={{ color: '#92400e', fontSize: 13 }}>
+            — hệ thống sẽ tự xóa cảnh báo nếu máy kết nối lại và in tiếp
           </span>
         </div>
       )}
@@ -726,8 +846,8 @@ export default function Fleet() {
       {/* Upload-stalled banner */}
       {awaitingUploadReview.length > 0 && (
         <div style={{
-          background: '#292113',
-          border: '1px solid #92400e',
+          background: '#fffbeb',
+          border: '1px solid #fde68a',
           borderRadius: 8,
           padding: '10px 16px',
           marginBottom: 16,
@@ -735,8 +855,8 @@ export default function Fleet() {
           alignItems: 'center',
           gap: 12,
         }}>
-          <span style={{ color: '#fbbf24', fontWeight: 600, fontSize: 14 }}>
-            {awaitingUploadReview.length} printer{awaitingUploadReview.length !== 1 ? 's' : ''} had a failed upload — check each machine
+          <span style={{ color: '#b45309', fontWeight: 700, fontSize: 14 }}>
+            ⚠️ {awaitingUploadReview.length} máy in gặp sự cố nạp file — vui lòng kiểm tra trực tiếp máy
           </span>
         </div>
       )}
@@ -744,8 +864,8 @@ export default function Fleet() {
       {/* Confirmation banner */}
       {awaitingConfirmation.length > 0 && (
         <div style={{
-          background: '#14532d',
-          border: '1px solid #15803d',
+          background: '#ecfdf5',
+          border: '1px solid #a7f3d0',
           borderRadius: 8,
           padding: '10px 16px',
           marginBottom: 16,
@@ -754,28 +874,28 @@ export default function Fleet() {
           gap: 12,
           flexWrap: 'wrap',
         }}>
-          <span style={{ color: '#86efac', fontWeight: 600, fontSize: 14 }}>
-            {awaitingConfirmation.length} printer{awaitingConfirmation.length !== 1 ? 's' : ''} awaiting confirmation
+          <span style={{ color: '#15803d', fontWeight: 700, fontSize: 14 }}>
+            ✓ {awaitingConfirmation.length} máy in đang chờ xác nhận nghiệm thu
           </span>
           <button
             onClick={selectAll}
-            style={{ background: '#166534', color: '#4ade80', border: 'none', borderRadius: 4, padding: '4px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+            style={{ background: '#ffffff', color: '#15803d', border: '1px solid #86efac', borderRadius: 4, padding: '4px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
           >
-            Select All
+            Chọn tất cả
           </button>
           {selectedForReady.size > 0 && (
             <>
               <button
                 onClick={deselectAll}
-                style={{ background: '#1f2937', color: '#9ca3af', border: 'none', borderRadius: 4, padding: '4px 12px', fontSize: 12, cursor: 'pointer' }}
+                style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: 4, padding: '4px 12px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
               >
-                Deselect All
+                Bỏ chọn
               </button>
               <button
                 onClick={setReadyForSelected}
-                style={{ background: '#15803d', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                style={{ background: '#16a34a', color: '#ffffff', border: 'none', borderRadius: 4, padding: '4px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
               >
-                ✓ Set Ready ({selectedForReady.size})
+                ✓ Xác nhận Set Ready ({selectedForReady.size})
               </button>
             </>
           )}
@@ -785,16 +905,16 @@ export default function Fleet() {
       {/* Filter chips */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         {[
-          { key: 'ALL',      count: printers.length,        label: `All (${printers.length})`,             color: '#64748b' },
-          { key: 'PRINTING', count: counts.PRINTING || 0,   label: `Printing (${counts.PRINTING || 0})`,   color: STATUS_COLORS.PRINTING.text },
-          { key: 'UPLOADING',count: counts.UPLOADING || 0,  label: `Uploading (${counts.UPLOADING || 0})`, color: STATUS_COLORS.UPLOADING.text },
-          { key: 'IDLE',     count: counts.IDLE || 0,       label: `Idle (${counts.IDLE || 0})`,           color: STATUS_COLORS.IDLE.text },
-          { key: 'FINISHED', count: counts.FINISHED || 0,   label: `Finished (${counts.FINISHED || 0})`,   color: STATUS_COLORS.FINISHED.text },
-          { key: 'STOPPED',  count: counts.STOPPED || 0,    label: `Stopped (${counts.STOPPED || 0})`,     color: STATUS_COLORS.STOPPED.text },
-          { key: 'ERROR',    count: counts.ERROR || 0,      label: `Error (${counts.ERROR || 0})`,         color: STATUS_COLORS.ERROR.text },
-          { key: 'ATTENTION',count: counts.ATTENTION || 0,  label: `Attention (${counts.ATTENTION || 0})`, color: STATUS_COLORS.ATTENTION.text },
-          { key: 'OFFLINE',  count: counts.OFFLINE || 0,    label: `Offline (${counts.OFFLINE || 0})`,     color: STATUS_COLORS.OFFLINE.text },
-          ...(hasUnknown ? [{ key: 'UNKNOWN', count: 1, label: `Unknown (${printers.filter(p => !KNOWN_STATUSES.has(p.status)).length})`, color: STATUS_COLORS.UNKNOWN.text }] : []),
+          { key: 'ALL',      count: printers.length,        label: `Tất cả (${printers.length})`,             color: '#64748b' },
+          { key: 'PRINTING', count: counts.PRINTING || 0,   label: `Đang in (${counts.PRINTING || 0})`,   color: STATUS_COLORS.PRINTING.text },
+          { key: 'UPLOADING',count: counts.UPLOADING || 0,  label: `Đang nạp file (${counts.UPLOADING || 0})`, color: STATUS_COLORS.UPLOADING.text },
+          { key: 'IDLE',     count: counts.IDLE || 0,       label: `Sẵn sàng (${counts.IDLE || 0})`,           color: STATUS_COLORS.IDLE.text },
+          { key: 'FINISHED', count: counts.FINISHED || 0,   label: `Đã xong (${counts.FINISHED || 0})`,   color: STATUS_COLORS.FINISHED.text },
+          { key: 'STOPPED',  count: counts.STOPPED || 0,    label: `Tạm dừng (${counts.STOPPED || 0})`,     color: STATUS_COLORS.STOPPED.text },
+          { key: 'ERROR',    count: counts.ERROR || 0,      label: `Lỗi (${counts.ERROR || 0})`,         color: STATUS_COLORS.ERROR.text },
+          { key: 'ATTENTION',count: counts.ATTENTION || 0,  label: `Cần chú ý (${counts.ATTENTION || 0})`, color: STATUS_COLORS.ATTENTION.text },
+          { key: 'OFFLINE',  count: counts.OFFLINE || 0,    label: `Mất kết nối (${counts.OFFLINE || 0})`,     color: STATUS_COLORS.OFFLINE.text },
+          ...(hasUnknown ? [{ key: 'UNKNOWN', count: 1, label: `Chưa rõ (${printers.filter(p => !KNOWN_STATUSES.has(p.status)).length})`, color: STATUS_COLORS.UNKNOWN.text }] : []),
         // Zero-count chips are noise — hide them unless that filter is currently active
         ].filter(({ key, count }) => key === 'ALL' || count > 0 || filter === key)
          .map(({ key, label, color }) => (
@@ -802,15 +922,15 @@ export default function Fleet() {
             key={key}
             onClick={() => setFilter(key)}
             style={{
-              background: filter === key ? '#1d4ed8' : '#1e2433',
-              color: filter === key ? '#fff' : color,
-              border: `1px solid ${filter === key ? '#60a5fa' : '#2d3748'}`,
+              background: filter === key ? '#da251d' : '#ffffff',
+              color: filter === key ? '#ffffff' : color,
+              border: `1px solid ${filter === key ? '#da251d' : '#e2e8f0'}`,
               borderRadius: 20,
               padding: '4px 12px',
-              fontSize: 13,
+              fontSize: 12,
               cursor: 'pointer',
-              fontWeight: filter === key ? 700 : 400,
-              boxShadow: filter === key ? '0 0 0 1px #3b82f630' : 'none',
+              fontWeight: filter === key ? 700 : 600,
+              boxShadow: filter === key ? '0 2px 4px rgba(218, 37, 29, 0.2)' : '0 1px 2px rgba(0,0,0,0.03)',
             }}
           >
             {label}
@@ -818,19 +938,20 @@ export default function Fleet() {
         ))}
         <input
           type="text"
-          placeholder="Search name / IP / group…"
+          placeholder="Tìm tên máy / IP / cụm máy…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
-            background: '#1e2433',
-            border: '1px solid #2d3748',
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
             borderRadius: 20,
             padding: '4px 14px',
-            color: '#e2e8f0',
+            color: '#0f172a',
             fontSize: 13,
             outline: 'none',
             flex: '1 1 180px',
             maxWidth: 280,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
           }}
         />
       </div>
@@ -858,8 +979,8 @@ export default function Fleet() {
 
       {Object.entries(grouped).map(([model, group]) => (
         <div key={model} style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
-            {MODEL_LABELS[model] || model} <span style={{ fontWeight: 400, color: '#475569' }}>({group.length})</span>
+          <h2 style={{ fontSize: 13, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+            {MODEL_LABELS[model] || model} <span style={{ fontWeight: 600, color: '#64748b' }}>({group.length})</span>
           </h2>
           <div style={{
             display: 'grid',
@@ -878,6 +999,9 @@ export default function Fleet() {
                 onDecommission={decommission}
                 onLinkJob={openLinkJobModal}
                 onOpenDetail={(id) => navigate(`/printers/${id}`)}
+                canOperate={canOperate}
+                canReportFailure={canReportFailure}
+                canManagePrinters={canManagePrinters}
               />
             ))}
           </div>

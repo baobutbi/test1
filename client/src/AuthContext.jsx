@@ -73,12 +73,24 @@ export function AuthProvider({ children }) {
   }, [fetchCurrentUser, loadDemoUsers, token]);
 
   const login = async (username, password) => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await res.json();
+    let res;
+    try {
+      res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+    } catch (err) {
+      throw new Error(`Không thể kết nối đến máy chủ backend. Vui lòng kiểm tra server backend đã được chạy chưa (${err.message})`);
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch (_err) {
+      throw new Error(`Máy chủ không phản hồi đúng dữ liệu (${res.status} ${res.statusText}). Vui lòng đảm bảo backend đang chạy đúng cổng.`);
+    }
+
     if (!res.ok) throw new Error(data.error || 'Đăng nhập thất bại');
 
     localStorage.setItem('print_farm_token', data.token);
@@ -89,12 +101,24 @@ export function AuthProvider({ children }) {
   };
 
   const register = async ({ username, password, display_name, email, role }) => {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, display_name, email, role }),
-    });
-    const data = await res.json();
+    let res;
+    try {
+      res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, display_name, email, role }),
+      });
+    } catch (err) {
+      throw new Error(`Không thể kết nối đến máy chủ backend (${err.message})`);
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch (_err) {
+      throw new Error(`Máy chủ không phản hồi đúng dữ liệu (${res.status} ${res.statusText})`);
+    }
+
     if (!res.ok) throw new Error(data.error || 'Đăng ký tài khoản thất bại');
 
     localStorage.setItem('print_farm_token', data.token);
@@ -105,12 +129,24 @@ export function AuthProvider({ children }) {
   };
 
   const switchDemo = async (username) => {
-    const res = await fetch('/api/auth/switch-demo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
-    });
-    const data = await res.json();
+    let res;
+    try {
+      res = await fetch('/api/auth/switch-demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+    } catch (err) {
+      throw new Error(`Không thể kết nối máy chủ (${err.message})`);
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch (_err) {
+      throw new Error(`Lỗi phản hồi từ máy chủ (${res.status})`);
+    }
+
     if (!res.ok) throw new Error(data.error || 'Chuyển tài khoản thất bại');
 
     localStorage.setItem('print_farm_token', data.token);
@@ -128,11 +164,30 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // Role helpers
-  const isAdmin = user?.role === 'admin';
-  const isOperator = user?.role === 'operator';
-  const isViewer = user?.role === 'viewer';
-  const canOperate = isAdmin || isOperator;
+  // Factory Role helpers for 3D Vincons Window
+  const role = user?.role || 'viewer';
+  const isAdmin = role === 'admin';
+  const isDirector = role === 'director' || isAdmin;
+  const isManager = ['admin', 'director', 'manager', 'shift_leader'].includes(role);
+  const isShiftLeader = ['admin', 'director', 'manager', 'shift_leader'].includes(role);
+  const isSupervisor = ['admin', 'director', 'manager', 'shift_leader', 'supervisor', 'qc'].includes(role);
+  const isQC = ['admin', 'director', 'manager', 'shift_leader', 'supervisor', 'qc'].includes(role);
+  const isTechnician = ['admin', 'director', 'manager', 'shift_leader', 'technician'].includes(role);
+  const isOperator = ['admin', 'director', 'manager', 'shift_leader', 'technician', 'operator'].includes(role);
+  const isPostProcessing = role === 'post_processing';
+  const isViewer = role === 'viewer';
+
+  // Permission flags based on factory hierarchy
+  // Nhân viên hậu kỳ và QC có toàn quyền Báo lỗi in & upload ảnh
+  const canReportFailure = ['admin', 'director', 'manager', 'shift_leader', 'technician', 'supervisor', 'qc', 'operator', 'post_processing'].includes(role);
+  // Thao tác vận hành máy: Admin, Giám đốc, Quản đốc, Trưởng ca, Kỹ thuật, Vận hành
+  const canOperate = ['admin', 'director', 'manager', 'shift_leader', 'technician', 'operator'].includes(role);
+  // Quản lý người dùng: Admin và Giám đốc nhà máy
+  const canManageUsers = ['admin', 'director'].includes(role);
+  // Quản lý máy in và khôi phục máy bảo trì: Admin, Giám đốc, Quản đốc, Trưởng ca, Kỹ thuật
+  const canManagePrinters = ['admin', 'director', 'manager', 'shift_leader', 'technician'].includes(role);
+  const canRecommission = ['admin', 'director', 'manager', 'shift_leader', 'technician'].includes(role);
+  const canAccessSettings = ['admin', 'director', 'manager'].includes(role);
 
   return (
     <AuthContext.Provider
@@ -145,10 +200,23 @@ export function AuthProvider({ children }) {
         register,
         switchDemo,
         logout,
+        role,
         isAdmin,
+        isDirector,
+        isManager,
+        isShiftLeader,
+        isSupervisor,
+        isQC,
+        isTechnician,
         isOperator,
+        isPostProcessing,
         isViewer,
         canOperate,
+        canReportFailure,
+        canManageUsers,
+        canManagePrinters,
+        canRecommission,
+        canAccessSettings,
         authFetch,
         refreshDemoUsers: loadDemoUsers,
       }}

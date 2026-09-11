@@ -24,10 +24,10 @@ function formatMaterialForInput(grams) {
 // Model options are loaded from /api/models at runtime — no hardcoded list here.
 
 const PROJECT_STATUS = {
-  draft:     { bg: '#1f2937', text: '#9ca3af', dot: '#6b7280', label: 'Draft' },
-  active:    { bg: '#166534', text: '#4ade80', dot: '#4ade80', label: 'Active' },
-  paused:    { bg: '#713f12', text: '#fcd34d', dot: '#fcd34d', label: 'Paused' },
-  completed: { bg: '#14532d', text: '#86efac', dot: '#86efac', label: 'Completed' },
+  draft:     { bg: '#f1f5f9', text: '#64748b', dot: '#94a3b8', label: 'Bản nháp' },
+  active:    { bg: '#ecfdf5', text: '#15803d', dot: '#16a34a', label: 'Đang chạy' },
+  paused:    { bg: '#fffbeb', text: '#b45309', dot: '#d97706', label: 'Tạm dừng' },
+  completed: { bg: '#eff6ff', text: '#1d4ed8', dot: '#2563eb', label: 'Hoàn thành' },
 };
 
 // Only Active projects show by default; Draft, Paused, and Completed are each behind
@@ -93,13 +93,13 @@ function StatusDropdown({ project, onTransition }) {
           position: 'absolute',
           top: 'calc(100% + 4px)',
           left: 0,
-          background: '#1e2433',
-          border: '1px solid #334155',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
           borderRadius: 6,
           overflow: 'hidden',
           zIndex: 200,
           minWidth: 170,
-          boxShadow: '0 6px 20px rgba(0,0,0,0.5)',
+          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
         }}>
           {options.map(opt => (
             <button
@@ -111,13 +111,13 @@ function StatusDropdown({ project, onTransition }) {
                 textAlign: 'left',
                 background: 'none',
                 border: 'none',
-                color: opt.danger ? '#fca5a5' : '#e2e8f0',
+                color: opt.danger ? '#dc2626' : '#0f172a',
                 padding: '9px 14px',
                 fontSize: 13,
                 cursor: 'pointer',
-                borderTop: opt.danger ? '1px solid #1f2937' : 'none',
+                borderTop: opt.danger ? '1px solid #f1f5f9' : 'none',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#0f172a'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
             >
               {opt.label}
@@ -130,16 +130,16 @@ function StatusDropdown({ project, onTransition }) {
 }
 
 const PART_STATUS = {
-  open:   { bg: '#1e3a5f', text: '#60a5fa', label: 'Open',     help: 'Still needs parts — the scheduler will keep dispatching jobs for it' },
-  closed: { bg: '#14532d', text: '#86efac', label: 'Complete', help: 'Target quantity reached — no more jobs will dispatch for this part' },
+  open:   { bg: '#eff6ff', text: '#1d4ed8', label: 'Đang in',     help: 'Cần tiếp tục in — hệ thống sẽ tự động điều phối việc' },
+  closed: { bg: '#ecfdf5', text: '#15803d', label: 'Hoàn tất', help: 'Đã đủ số lượng mục tiêu — ngừng điều phối' },
 };
 
 const inputSx = {
-  background: '#0f172a',
-  border: '1px solid #2d3748',
+  background: '#ffffff',
+  border: '1px solid #cbd5e1',
   borderRadius: 6,
-  padding: '5px 10px',
-  color: '#e2e8f0',
+  padding: '6px 10px',
+  color: '#0f172a',
   fontSize: 13,
   outline: 'none',
 };
@@ -1327,101 +1327,92 @@ export default function Projects() {
         )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700 }}>Projects</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>Dự án sản xuất (Projects)</h1>
           <button
             onClick={() => setShowNewForm(v => !v)}
-            style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            style={{ background: '#da251d', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(218, 37, 29, 0.2)' }}
           >
-            + New Project
+            + Tạo Dự Án Mới
           </button>
         </div>
 
         {(draftCount > 0 || pausedCount > 0 || completedCount > 0) && (
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
             {draftCount > 0 && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94a3b8', cursor: 'pointer' }}>
-                <input type="checkbox" checked={showDraft} onChange={e => toggleShowDraft(e.target.checked)} style={{ accentColor: '#3b82f6' }} />
-                Show drafts ({draftCount})
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748b', cursor: 'pointer', fontWeight: 500 }}>
+                <input type="checkbox" checked={showDraft} onChange={e => toggleShowDraft(e.target.checked)} style={{ accentColor: '#da251d' }} />
+                Hiện bản nháp ({draftCount})
               </label>
             )}
             {pausedCount > 0 && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94a3b8', cursor: 'pointer' }}>
-                <input type="checkbox" checked={showPaused} onChange={e => toggleShowPaused(e.target.checked)} style={{ accentColor: '#3b82f6' }} />
-                Show paused ({pausedCount})
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748b', cursor: 'pointer', fontWeight: 500 }}>
+                <input type="checkbox" checked={showPaused} onChange={e => toggleShowPaused(e.target.checked)} style={{ accentColor: '#da251d' }} />
+                Hiện tạm dừng ({pausedCount})
               </label>
             )}
             {completedCount > 0 && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94a3b8', cursor: 'pointer' }}>
-                <input type="checkbox" checked={showCompleted} onChange={e => toggleShowCompleted(e.target.checked)} style={{ accentColor: '#3b82f6' }} />
-                Show completed ({completedCount})
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748b', cursor: 'pointer', fontWeight: 500 }}>
+                <input type="checkbox" checked={showCompleted} onChange={e => toggleShowCompleted(e.target.checked)} style={{ accentColor: '#da251d' }} />
+                Hiện hoàn thành ({completedCount})
               </label>
             )}
           </div>
         )}
 
         {showNewForm && (
-          <div style={{ background: '#1e2433', border: '1px solid #2d3748', borderRadius: 8, padding: 16, marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 18, marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ color: '#94a3b8', fontSize: 12 }}>Name *</label>
+              <label style={{ color: '#334155', fontSize: 12, fontWeight: 700 }}>Tên dự án *</label>
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Project name"
+                placeholder="VD: VinFast VF3 - Phụ kiện nội thất"
                 onKeyDown={(e) => e.key === 'Enter' && createProject()}
-                style={{ ...inputSx, width: 220 }}
+                style={{ ...inputSx, width: 240 }}
                 autoFocus
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ color: '#94a3b8', fontSize: 12 }}>Description</label>
+              <label style={{ color: '#334155', fontSize: 12, fontWeight: 700 }}>Mô tả chi tiết</label>
               <input
                 type="text"
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
-                placeholder="Optional"
+                placeholder="Mã đơn hàng / ghi chú kỹ thuật…"
                 style={{ ...inputSx, width: 280 }}
               />
             </div>
             <button
               onClick={createProject}
-              style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: '#da251d', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
             >
-              Create
+              Lưu dự án
             </button>
             <button
               onClick={() => { setShowNewForm(false); setNewName(''); setNewDesc(''); }}
-              style={{ background: '#1f2937', color: '#9ca3af', border: 'none', borderRadius: 4, padding: '6px 14px', fontSize: 13, cursor: 'pointer' }}
+              style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: 6, padding: '7px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
             >
-              Cancel
+              Hủy
             </button>
           </div>
         )}
 
-        {loading && <p style={{ color: '#64748b' }}>Loading…</p>}
+        {loading && <p style={{ color: '#64748b' }}>Đang tải dữ liệu…</p>}
         {!loading && projects.length === 0 && (
           <EmptyState
-            title="Create your first project"
-            hint={
-              <>
-                Projects are how work flows through the farm:&nbsp;
-                a <strong style={{ color: '#cbd5e1' }}>Project</strong> contains{' '}
-                <strong style={{ color: '#cbd5e1' }}>Parts</strong> (what to print and how many),
-                each part gets <strong style={{ color: '#cbd5e1' }}>G-code</strong> uploaded per printer model,
-                and the scheduler dispatches <strong style={{ color: '#cbd5e1' }}>Jobs</strong> to idle printers
-                until every part hits its target quantity. Start with “+ New Project” above.
-              </>
-            }
+            title="Chưa có dự án nào"
+            hint="Bấm '+ Tạo Dự Án Mới' phía trên để thiết lập quy trình in chi tiết và linh kiện sản xuất."
           />
         )}
         {!loading && projects.length > 0 && visibleProjects.length === 0 && (
           <EmptyState
-            title="No active projects"
-            hint="Every project here is Draft, Paused, or Completed. Check a box above to show them."
+            title="Không có dự án đang hoạt động"
+            hint="Các dự án hiện tại đều thuộc nhóm Bản nháp, Tạm dừng hoặc Đã hoàn thành. Hãy tích chọn các ô lọc phía trên để hiển thị."
           />
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {visibleProjects.map(p => {
             const s = PROJECT_STATUS[p.status] || PROJECT_STATUS.draft;
             const isDragging = projectDragSrc === p.id;
@@ -1435,25 +1426,26 @@ export default function Projects() {
                 onDrop={e => { e.preventDefault(); dropProject(p.id); }}
                 onDragEnd={() => { setProjectDragSrc(null); setProjectDragOver(null); }}
                 style={{
-                  background: '#1e2433',
-                  border: `1px solid ${isOver ? '#3b82f6' : '#2d3748'}`,
+                  background: '#ffffff',
+                  border: `1px solid ${isOver ? '#da251d' : '#e2e8f0'}`,
                   borderRadius: 8,
-                  padding: '12px 16px',
+                  padding: '14px 18px',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
                   opacity: isDragging ? 0.4 : 1,
-                  transition: 'border-color 0.1s, opacity 0.1s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
                 }}
               >
                 {/* Drag handle */}
                 <span
-                  title="Drag to reorder"
+                  title="Kéo thả để sắp xếp mức ưu tiên"
                   aria-hidden="true"
-                  style={{ color: '#334155', fontSize: 16, cursor: 'grab', flexShrink: 0, userSelect: 'none', lineHeight: 1 }}
+                  style={{ color: '#cbd5e1', fontSize: 16, cursor: 'grab', flexShrink: 0, userSelect: 'none', lineHeight: 1 }}
                 >⠿</span>
 
                 {/* Name + description — clicking here navigates */}
                 <div style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} onClick={() => setSelectedId(p.id)}>
-                  <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 3, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {p.name}
                   </div>
                   {p.description && (
@@ -1464,24 +1456,24 @@ export default function Projects() {
                 {/* Duplicate button — stop propagation so it doesn't navigate into the project */}
                 <div style={{ flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                   <button
-                    onClick={() => { setDupModal({ id: p.id }); setDupName(`Copy of ${p.name}`); }}
-                    title="Duplicate project"
+                    onClick={() => { setDupModal({ id: p.id }); setDupName(`Bản sao của ${p.name}`); }}
+                    title="Nhân bản dự án"
                     style={{
-                      background: 'none', border: '1px solid #334155', borderRadius: 4,
-                      padding: '3px 8px', color: '#64748b', fontSize: 12, cursor: 'pointer', lineHeight: 1.4,
+                      background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 4,
+                      padding: '4px 10px', color: '#475569', fontSize: 12, cursor: 'pointer', lineHeight: 1.4, fontWeight: 600,
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#e2e8f0'; e.currentTarget.style.borderColor = '#475569'; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = '#334155'; }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#da251d'; e.currentTarget.style.borderColor = '#da251d'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
                   >
-                    Copy
+                    Nhân bản
                   </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0, cursor: 'pointer' }} onClick={() => setSelectedId(p.id)}>
-                  <span style={{ background: s.bg, color: s.text, border: `1px solid ${s.text}40`, borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                  <span style={{ background: s.bg, color: s.text, border: `1px solid ${s.text}30`, borderRadius: 4, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>
                     {s.label}
                   </span>
-                  <span style={{ color: '#475569', fontSize: 13 }}>→</span>
+                  <span style={{ color: '#94a3b8', fontSize: 14, fontWeight: 700 }}>→</span>
                 </div>
               </div>
             );

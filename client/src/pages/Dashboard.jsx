@@ -6,30 +6,30 @@ const POLL_INTERVAL_MS = 15000;
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const CELL_COLORS = {
-  PRINTING:  { bg: '#1e3a5f', text: '#60a5fa', border: '#1e40af' },
-  IDLE:      { bg: '#1a2030', text: '#374151', border: '#232b3a' },
-  FINISHED:  { bg: '#14532d', text: '#22c55e', border: '#15803d' },
-  STOPPED:   { bg: '#431407', text: '#fb923c', border: '#7c2d12' },
-  PAUSED:    { bg: '#451a03', text: '#f59e0b', border: '#78350f' },
-  ATTENTION: { bg: '#451a03', text: '#f59e0b', border: '#78350f' },
-  ERROR:     { bg: '#450a0a', text: '#ef4444', border: '#7f1d1d' },
-  OFFLINE:   { bg: '#0d1117', text: '#1f2937', border: '#161b22' },
+  PRINTING:  { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  IDLE:      { bg: '#f8fafc', text: '#475569', border: '#e2e8f0' },
+  FINISHED:  { bg: '#ecfdf5', text: '#15803d', border: '#a7f3d0' },
+  STOPPED:   { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
+  PAUSED:    { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  ATTENTION: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  ERROR:     { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
+  OFFLINE:   { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1' },
 };
 
 const STAT_CARDS = [
-  { key: 'printing',    label: 'Printing',    color: '#3b82f6', accent: '#1e40af' },
-  { key: 'idle',        label: 'Idle',        color: '#6b7280', accent: '#374151' },
-  { key: 'awaiting',    label: 'Awaiting Sign-off', color: '#22c55e', accent: '#15803d', help: 'Finished prints waiting for an operator to confirm good/bad before the next job dispatches' },
-  { key: 'parts_today', label: 'Parts Today', color: '#a78bfa', accent: '#7c3aed' },
+  { key: 'printing',    label: 'Đang in (Printing)',    color: '#1d4ed8', accent: '#3b82f6' },
+  { key: 'idle',        label: 'Sẵn sàng (Idle)',        color: '#475569', accent: '#94a3b8' },
+  { key: 'awaiting',    label: 'Chờ nghiệm thu (Sign-off)', color: '#15803d', accent: '#22c55e', help: 'Bản in đã xong đang chờ nhân viên kiểm tra nghiệm thu/báo lỗi trước khi điều phối lệnh tiếp theo' },
+  { key: 'parts_today', label: 'Sản lượng hôm nay', color: '#c2410c', accent: '#ea580c' },
 ];
 
 const LEGEND_ITEMS = [
-  { label: 'Printing', color: '#3b82f6' },
-  { label: 'Awaiting Sign-off', color: '#22c55e' },
-  { label: 'Idle',     color: '#4b5563' },
-  { label: 'Stopped',  color: '#fb923c' },
-  { label: 'Error',    color: '#ef4444' },
-  { label: 'Offline',  color: '#374151' },
+  { label: 'Đang in', color: '#2563eb' },
+  { label: 'Chờ nghiệm thu', color: '#16a34a' },
+  { label: 'Sẵn sàng',     color: '#64748b' },
+  { label: 'Tạm dừng',  color: '#ea580c' },
+  { label: 'Lỗi / Hỏng',    color: '#da251d' },
+  { label: 'Mất kết nối',  color: '#94a3b8' },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -150,11 +150,11 @@ export default function Dashboard() {
   if (!data) {
     return (
       <div style={{
-        background: '#0a0f1a', height: '100vh',
+        background: '#f8fafc', height: '100vh',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#475569', fontSize: 18,
+        color: '#64748b', fontSize: 16, fontWeight: 600,
       }}>
-        Loading…
+        Đang tải dữ liệu Trung tâm điều hành…
       </div>
     );
   }
@@ -181,68 +181,70 @@ export default function Dashboard() {
     <div
       ref={dashRef}
       style={{
-        background: '#0a0f1a',
+        background: '#f8fafc',
         minHeight: '100vh',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#e2e8f0',
+        color: '#0f172a',
         userSelect: 'none',
       }}
     >
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div style={{
-        background: '#0d1117', borderBottom: '1px solid #1e2433',
-        padding: '0 28px', height: 64,
+        background: '#ffffff', borderBottom: '1px solid #e2e8f0',
+        padding: '0 28px', height: 68,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
       }}>
 
         {/* Left: branding */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 4, height: 36, background: '#1d4ed8', borderRadius: 2, flexShrink: 0 }} />
+          <div style={{ width: 4, height: 38, background: '#da251d', borderRadius: 2, flexShrink: 0 }} />
           <div>
-            <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: '0.05em', color: '#f1f5f9' }}>
-              PRINT FARM
+            <div style={{ fontWeight: 800, fontSize: 19, letterSpacing: '0.02em', color: '#0f172a' }}>
+              3D VINCONS WINDOW
             </div>
-            <div style={{ fontSize: 11, color: '#475569', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>
-              Command Center
+            <div style={{ fontSize: 11, color: '#da251d', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700, marginTop: 1 }}>
+              Trung tâm Điều hành Sản xuất In 3D
             </div>
           </div>
         </div>
 
         {/* Center: utilization */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span style={{ fontSize: 13, color: '#475569', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Fleet Utilization
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, background: '#f1f5f9', padding: '6px 16px', borderRadius: 20 }}>
+          <span style={{ fontSize: 12, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
+            Hiệu suất vận hành:
           </span>
-          <span style={{ fontSize: 32, fontWeight: 800, color: '#3b82f6', fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ fontSize: 28, fontWeight: 800, color: '#da251d', fontVariantNumeric: 'tabular-nums' }}>
             {utilPct}%
           </span>
-          <span style={{ fontSize: 13, color: '#374151' }}>
-            ({stats.printing} / {printers.length})
+          <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+            ({stats.printing} / {printers.length} máy)
           </span>
         </div>
 
         {/* Right: clock + TV mode button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 28, fontWeight: 700, color: '#60a5fa', lineHeight: 1 }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 26, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
               {formatTime(clock)}
             </div>
-            <div style={{ fontSize: 12, color: '#475569', marginTop: 3 }}>
+            <div style={{ fontSize: 12, color: '#64748b', marginTop: 3, fontWeight: 500 }}>
               {formatDate(clock)}
             </div>
           </div>
           <PollTimer lastPolled={lastPolled} intervalMs={POLL_INTERVAL_MS} size={28} />
           <button
             onClick={enterTV}
-            title="Enter fullscreen TV mode"
+            title="Chế độ toàn màn hình TV giám sát"
             style={{
-              background: '#1e2433', color: '#64748b',
-              border: '1px solid #2d3748', borderRadius: 6,
-              padding: '6px 12px', fontSize: 12, cursor: 'pointer',
+              background: '#f8fafc', color: '#334155',
+              border: '1px solid #cbd5e1', borderRadius: 6,
+              padding: '7px 14px', fontSize: 12, cursor: 'pointer',
+              fontWeight: 600,
             }}
           >
-            ⛶ TV Mode
+            ⛶ Chế độ TV
           </button>
         </div>
       </div>
@@ -250,23 +252,25 @@ export default function Dashboard() {
       <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* ── STAT CARDS ──────────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
           {STAT_CARDS.map(({ key, label, color, accent, help }) => (
             <div key={key} title={help} style={{
-              background: '#1e2433', borderRadius: 8,
+              background: '#ffffff', borderRadius: 10,
               padding: '16px 20px',
               display: 'flex', alignItems: 'center', gap: 18,
+              border: '1px solid #e2e8f0',
               borderLeft: `4px solid ${accent}`,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}>
               <div style={{
-                fontSize: 52, fontWeight: 800, color, lineHeight: 1,
+                fontSize: 44, fontWeight: 800, color, lineHeight: 1,
                 fontVariantNumeric: 'tabular-nums',
               }}>
                 {(stats[key] ?? 0).toLocaleString()}
               </div>
               <div style={{
-                fontSize: 11, color: '#475569',
-                textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700,
+                fontSize: 11, color: '#64748b',
+                textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700,
               }}>
                 {label}
               </div>
@@ -275,29 +279,32 @@ export default function Dashboard() {
         </div>
 
         {/* ── FLEET GRID ──────────────────────────────────────────────────── */}
-        <div style={{ background: '#111827', borderRadius: 10, padding: '16px 20px' }}>
+        <div style={{ background: '#ffffff', borderRadius: 10, padding: '18px 22px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <div style={{
-            fontSize: 11, color: '#374151',
-            textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700,
-            marginBottom: 14,
+            fontSize: 12, color: '#0f172a',
+            textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800,
+            marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            Fleet Status
+            <span>Tổng quan Trạng thái Dàn máy In</span>
+            <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500, textTransform: 'none' }}>
+              Tổng cộng {printers.length} máy in
+            </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {Object.entries(grouped).map(([model, group]) => (
               <div key={model} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
                 {/* Model label */}
-                <div style={{ width: 76, flexShrink: 0, textAlign: 'right' }}>
-                  <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+                <div style={{ width: 84, flexShrink: 0, textAlign: 'right' }}>
+                  <div style={{ fontSize: 13, color: '#0f172a', fontWeight: 700 }}>
                     {MODEL_LABELS[model] || model}
                   </div>
-                  <div style={{ fontSize: 11, color: '#374151' }}>×{group.length}</div>
+                  <div style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>×{group.length} máy</div>
                 </div>
 
                 {/* Printer cells */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, flex: 1 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, flex: 1 }}>
                   {group.map(printer => {
                     const c = cellColors(printer);
                     return (
@@ -305,13 +312,16 @@ export default function Dashboard() {
                         key={printer.id}
                         title={`${printer.name} — ${printer.status}`}
                         style={{
-                          width: 54, height: 44, borderRadius: 6,
+                          width: 56, height: 44, borderRadius: 6,
                           background: c.bg, border: `1px solid ${c.border}`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+                          cursor: 'default',
                         }}
                       >
                         <span style={{
-                          fontFamily: 'monospace', fontSize: 8, color: c.text,
+                          fontFamily: 'monospace', fontSize: 10, color: c.text,
+                          fontWeight: 700,
                           textAlign: 'center', padding: '0 3px',
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           width: '100%',
@@ -331,31 +341,32 @@ export default function Dashboard() {
 
           {/* Color legend */}
           <div style={{
-            display: 'flex', gap: 18, marginTop: 14,
-            paddingTop: 12, borderTop: '1px solid #1e2433',
+            display: 'flex', gap: 20, marginTop: 16,
+            paddingTop: 14, borderTop: '1px solid #f1f5f9',
+            flexWrap: 'wrap',
           }}>
             {LEGEND_ITEMS.map(({ label, color }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0 }} />
-                <span style={{ fontSize: 11, color: '#475569' }}>{label}</span>
+                <span style={{ fontSize: 12, color: '#475569', fontWeight: 500 }}>{label}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* ── ACTIVE PROJECTS ─────────────────────────────────────────────── */}
-        <div style={{ background: '#111827', borderRadius: 10, padding: '16px 20px' }}>
+        <div style={{ background: '#ffffff', borderRadius: 10, padding: '18px 22px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <div style={{
-            fontSize: 11, color: '#374151',
-            textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700,
-            marginBottom: 14,
+            fontSize: 12, color: '#0f172a',
+            textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800,
+            marginBottom: 16,
           }}>
-            Active Projects
+            Dự án Đang Sản xuất (Active Projects)
           </div>
 
           {active_projects.length === 0 ? (
-            <p style={{ color: '#64748b', fontSize: 13, margin: 0 }}>
-              No active projects. Create one on the Projects page and set it Active to track production here.
+            <p style={{ color: '#64748b', fontSize: 13, margin: 0, padding: '16px 0', textAlign: 'center' }}>
+              Chưa có dự án nào đang kích hoạt sản xuất. Bạn có thể kích hoạt dự án trong mục "Dự án".
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -364,16 +375,16 @@ export default function Dashboard() {
 
                 return (
                   <div key={proj.id} style={{
-                    background: '#1e2433', borderRadius: 8, padding: '12px 14px',
+                    background: '#f8fafc', borderRadius: 8, padding: '14px 16px', border: '1px solid #e2e8f0',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                      <span style={{ fontWeight: 700, fontSize: 14 }}>{proj.name}</span>
+                      <span style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{proj.name}</span>
                       <span style={{
-                        background: '#166534', color: '#4ade80',
+                        background: '#ecfdf5', color: '#15803d', border: '1px solid #bbf7d0',
                         borderRadius: 3, padding: '1px 7px',
                         fontSize: 10, fontWeight: 700,
                       }}>
-                        ACTIVE
+                        ĐANG SẢN XUẤT
                       </span>
                     </div>
 
@@ -394,34 +405,35 @@ export default function Dashboard() {
                               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                               marginBottom: 4,
                             }}>
-                              <span style={{ fontSize: 12, color: '#e2e8f0', fontWeight: 500 }}>{part.name}</span>
+                              <span style={{ fontSize: 12, color: '#334155', fontWeight: 600 }}>{part.name}</span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
-                                  <span style={{ color: '#e2e8f0' }}>{part.completed_qty.toLocaleString()}</span>
+                                  <span style={{ color: '#0f172a', fontWeight: 600 }}>{part.completed_qty.toLocaleString()}</span>
                                   {activeQty > 0 && (
-                                    <span style={{ color: '#60a5fa' }}> +{activeQty.toLocaleString()}</span>
+                                    <span style={{ color: '#2563eb' }}> +{activeQty.toLocaleString()}</span>
                                   )}
-                                  <span style={{ color: '#475569' }}>{' / '}{part.target_qty.toLocaleString()}</span>
+                                  <span style={{ color: '#64748b' }}>{' / '}{part.target_qty.toLocaleString()}</span>
                                 </span>
-                                <span style={{ fontSize: 12, fontWeight: 700, color: part.status === 'closed' ? '#4ade80' : '#60a5fa', minWidth: 34, textAlign: 'right' }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: part.status === 'closed' ? '#16a34a' : '#2563eb', minWidth: 34, textAlign: 'right' }}>
                                   {pct}%
                                 </span>
                                 {part.status === 'closed' && (
                                   <span style={{
-                                    background: '#14532d', color: '#22c55e',
+                                    background: '#ecfdf5', color: '#15803d',
+                                    border: '1px solid #a7f3d0',
                                     borderRadius: 3, padding: '1px 5px',
                                     fontSize: 9, fontWeight: 700,
                                   }}>
-                                    DONE
+                                    HOÀN TẤT
                                   </span>
                                 )}
                               </div>
                             </div>
-                            <div style={{ position: 'relative', background: '#0f172a', borderRadius: 4, height: 9 }}>
+                            <div style={{ position: 'relative', background: '#e2e8f0', borderRadius: 4, height: 9 }}>
                               <div style={{
                                 position: 'absolute', left: 0, top: 0, height: '100%',
                                 width: `${completedPct}%`,
-                                background: '#22c55e',
+                                background: '#16a34a',
                                 borderRadius: activePct > 0 ? '4px 0 0 4px' : 4,
                                 transition: 'width 0.5s',
                               }} />
@@ -429,7 +441,7 @@ export default function Dashboard() {
                                 <div style={{
                                   position: 'absolute', left: `${completedPct}%`, top: 0, height: '100%',
                                   width: `${activePct}%`,
-                                  background: '#3b82f6',
+                                  background: '#2563eb',
                                   borderRadius: '0 4px 4px 0',
                                   transition: 'width 0.5s',
                                 }} />
@@ -438,7 +450,7 @@ export default function Dashboard() {
                                 <div style={{
                                   position: 'absolute', left: `${targetTickPct}%`, top: 0,
                                   width: 2, height: '100%',
-                                  background: '#f59e0b',
+                                  background: '#ea580c',
                                   transform: 'translateX(-50%)',
                                 }} />
                               )}
@@ -450,25 +462,25 @@ export default function Dashboard() {
 
                     {hasStats && (
                       <div style={{
-                        borderTop: '1px solid #1a2030', marginTop: 10, paddingTop: 8,
+                        borderTop: '1px solid #e2e8f0', marginTop: 10, paddingTop: 8,
                         display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, flexWrap: 'wrap',
                       }}>
-                        <span style={{ fontWeight: 700, color: '#cbd5e1' }}>So far</span>
-                        <span style={{ color: '#374151' }}>·</span>
+                        <span style={{ fontWeight: 700, color: '#475569' }}>Thống kê:</span>
+                        <span style={{ color: '#cbd5e1' }}>·</span>
                         {proj.elapsed_secs > 0 && (
-                          <span style={{ color: '#94a3b8' }}>{formatDuration(proj.elapsed_secs)}</span>
+                          <span style={{ color: '#64748b' }}>Thời gian: {formatDuration(proj.elapsed_secs)}</span>
                         )}
                         {proj.elapsed_secs > 0 && proj.material_used_grams > 0 && (
-                          <span style={{ color: '#374151' }}>·</span>
+                          <span style={{ color: '#cbd5e1' }}>·</span>
                         )}
                         {proj.material_used_grams > 0 && (
-                          <span style={{ color: '#a78bfa' }}>{formatMaterial(proj.material_used_grams)}</span>
+                          <span style={{ color: '#7c3aed', fontWeight: 600 }}>Vật liệu: {formatMaterial(proj.material_used_grams)}</span>
                         )}
                         {proj.model_breakdown && proj.model_breakdown.length > 1 && (
                           <>
-                            <span style={{ color: '#374151' }}>·</span>
+                            <span style={{ color: '#cbd5e1' }}>·</span>
                             <span style={{ color: '#64748b' }}>
-                              {proj.model_breakdown.map(m => m.printer_model).join(', ')}
+                              Dòng máy: {proj.model_breakdown.map(m => m.printer_model).join(', ')}
                             </span>
                           </>
                         )}

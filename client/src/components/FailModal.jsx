@@ -106,7 +106,7 @@ export default function FailModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.75)',
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -120,42 +120,44 @@ export default function FailModal({
         role="dialog"
         aria-modal="true"
         style={{
-          background: '#181f2c',
-          border: '1px solid #334155',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
           borderRadius: 12,
           padding: '24px 28px',
           maxWidth: 540,
           width: '100%',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.7)',
-          color: '#e2e8f0',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          color: '#0f172a',
           maxHeight: '92vh',
           overflowY: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               borderRadius: 8,
-              background: '#7f1d1d',
-              color: '#fca5a5',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              color: '#da251d',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 18,
               fontWeight: 800,
+              flexShrink: 0,
             }}
           >
             ✗
           </div>
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: '#f87171' }}>
-              Báo cáo bản in lỗi — {printer.name}
+            <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0, color: '#da251d' }}>
+              3D Vincons Window — Báo cáo bản in lỗi ({printer.name})
             </h2>
-            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-              Hệ thống sẽ hoàn số lượng sản phẩm, lưu ảnh lỗi và đưa máy về trạng thái kiểm tra.
+            <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+              Hệ thống sẽ ghi nhận sai số sản lượng, lưu ảnh chứng từ lỗi KCS và đưa máy vào diện kiểm tra.
             </div>
           </div>
         </div>
@@ -163,8 +165,8 @@ export default function FailModal({
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Failure Category */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#cbd5e1', marginBottom: 8 }}>
-              Phân loại nguyên nhân lỗi <span style={{ color: '#ef4444' }}>*</span>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>
+              Phân loại nguyên nhân lỗi <span style={{ color: '#da251d' }}>*</span>
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {FAILURE_CATEGORIES.map((cat) => (
@@ -175,9 +177,9 @@ export default function FailModal({
                   style={{
                     padding: '8px 10px',
                     borderRadius: 6,
-                    border: category === cat.id ? '2px solid #ef4444' : '1px solid #334155',
-                    background: category === cat.id ? '#3b1219' : '#0f172a',
-                    color: category === cat.id ? '#fecaca' : '#94a3b8',
+                    border: category === cat.id ? '2px solid #da251d' : '1px solid #e2e8f0',
+                    background: category === cat.id ? '#fef2f2' : '#f8fafc',
+                    color: category === cat.id ? '#991b1b' : '#475569',
                     fontSize: 12,
                     fontWeight: category === cat.id ? 700 : 500,
                     textAlign: 'left',
@@ -185,6 +187,7 @@ export default function FailModal({
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   <span>{cat.icon}</span>
@@ -198,7 +201,7 @@ export default function FailModal({
 
           {/* Photo Upload */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#cbd5e1', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
               Ảnh chụp thực tế bản in lỗi (Failure Photo)
             </label>
             <input
@@ -216,17 +219,17 @@ export default function FailModal({
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
                 style={{
-                  border: `2px dashed ${dragOver ? '#ef4444' : '#334155'}`,
+                  border: `2px dashed ${dragOver ? '#da251d' : '#cbd5e1'}`,
                   borderRadius: 8,
                   padding: '18px 14px',
                   textAlign: 'center',
-                  background: dragOver ? '#2d1519' : '#0f172a',
+                  background: dragOver ? '#fef2f2' : '#f8fafc',
                   cursor: 'pointer',
                   transition: 'border-color 0.15s, background 0.15s',
                 }}
               >
                 <div style={{ fontSize: 28, marginBottom: 4 }}>📸</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
                   Kéo thả ảnh lỗi vào đây hoặc bấm để chọn tệp
                 </div>
                 <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
@@ -237,10 +240,10 @@ export default function FailModal({
               <div
                 style={{
                   position: 'relative',
-                  border: '1px solid #334155',
+                  border: '1px solid #e2e8f0',
                   borderRadius: 8,
                   overflow: 'hidden',
-                  background: '#090d16',
+                  background: '#f8fafc',
                 }}
               >
                 <img
@@ -266,13 +269,15 @@ export default function FailModal({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     style={{
-                      background: 'rgba(30, 41, 59, 0.85)',
-                      border: '1px solid #475569',
-                      color: '#fff',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
                       borderRadius: 4,
-                      padding: '4px 8px',
+                      padding: '4px 10px',
                       fontSize: 11,
+                      fontWeight: 600,
                       cursor: 'pointer',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                     }}
                   >
                     Đổi ảnh
@@ -281,12 +286,13 @@ export default function FailModal({
                     type="button"
                     onClick={removePhoto}
                     style={{
-                      background: 'rgba(127, 29, 29, 0.85)',
-                      border: '1px solid #ef4444',
-                      color: '#fca5a5',
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#da251d',
                       borderRadius: 4,
-                      padding: '4px 8px',
+                      padding: '4px 10px',
                       fontSize: 11,
+                      fontWeight: 700,
                       cursor: 'pointer',
                     }}
                   >
@@ -299,8 +305,8 @@ export default function FailModal({
 
           {/* Notes / Reason */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#cbd5e1', marginBottom: 6 }}>
-              Mô tả chi tiết lỗi & Nhận định nguyên nhân <span style={{ color: '#ef4444' }}>*</span>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
+              Mô tả chi tiết lỗi & Nhận định nguyên nhân <span style={{ color: '#da251d' }}>*</span>
             </label>
             <textarea
               value={notes}
@@ -310,10 +316,10 @@ export default function FailModal({
               required
               style={{
                 width: '100%',
-                background: '#0f172a',
-                border: '1px solid #334155',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
                 borderRadius: 6,
-                color: '#e2e8f0',
+                color: '#0f172a',
                 fontSize: 13,
                 padding: '8px 10px',
                 outline: 'none',
@@ -331,9 +337,9 @@ export default function FailModal({
               onClick={onClose}
               disabled={uploading}
               style={{
-                background: '#1e293b',
-                color: '#94a3b8',
-                border: '1px solid #334155',
+                background: '#f8fafc',
+                color: '#64748b',
+                border: '1px solid #cbd5e1',
                 borderRadius: 6,
                 padding: '9px 16px',
                 fontSize: 13,
@@ -347,8 +353,8 @@ export default function FailModal({
               type="submit"
               disabled={uploading || !notes.trim()}
               style={{
-                background: uploading || !notes.trim() ? '#451a1a' : '#b91c1c',
-                color: '#fee2e2',
+                background: uploading || !notes.trim() ? '#fecaca' : '#da251d',
+                color: '#ffffff',
                 border: 'none',
                 borderRadius: 6,
                 padding: '9px 20px',
@@ -358,6 +364,7 @@ export default function FailModal({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
+                boxShadow: '0 2px 4px rgba(218, 37, 29, 0.2)',
               }}
             >
               {uploading ? 'Đang tải lên…' : '✗ Xác nhận lỗi & Cách ly máy in'}

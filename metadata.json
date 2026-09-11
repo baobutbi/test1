@@ -1,6 +1,6 @@
 {
-  "name": "3DPN Print Farm Manager",
-  "description": "Centralized print farm management for multi-brand 3D printer fleets",
+  "name": "3D Vincons Window - Hệ thống Quản trị Nông trại In 3D",
+  "description": "Hệ thống quản trị xưởng in 3D công nghiệp thông minh, điều hành máy in thời gian thực, quản lý lệnh in và kiểm soát chất lượng tại 3D Vincons Window",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

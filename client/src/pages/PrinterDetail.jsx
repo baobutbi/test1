@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import ImageModal from '../components/ImageModal';
+import FailModal from '../components/FailModal';
 
 function formatTimestamp(ms) {
   if (!ms) return '—';
@@ -77,7 +78,11 @@ export default function PrinterDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { user, canOperate }   = useAuth();
+  const { user, canOperate, canReportFailure, canManagePrinters, canMaintainPrinters, isDirector, isQC, isPostProcessing } = useAuth();
+  const canAddNotes = canOperate || canReportFailure || canMaintainPrinters || canManagePrinters;
+  const [failModalOpen, setFailModalOpen] = useState(false);
+  const [recommissioning, setRecommissioning] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
   const [printer, setPrinter]   = useState(null);
   const [events, setEvents]     = useState([]);
   const [stats, setStats]       = useState(null);
@@ -171,6 +176,54 @@ export default function PrinterDetail() {
     if (noteFileInputRef.current) noteFileInputRef.current.value = '';
     setSaving(false);
     fetchData();
+  }
+
+  async function handleFailModalSubmit({ printerId, category, notes, photoUrl, operatorName }) {
+    try {
+      const res = await fetch(`/api/printers/${printerId}/mark-job-failure`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          note: notes,
+          failure_category: category,
+          photo_url: photoUrl,
+          operator_name: operatorName || user?.display_name || user?.username,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setToastMessage({ type: 'error', text: `Báo lỗi thất bại: ${body.error || res.status}` });
+      } else {
+        setToastMessage({ type: 'success', text: 'Đã lưu ảnh lỗi KCS và hoàn bù sản lượng bản in!' });
+        fetchData();
+        fetchJobPage(1);
+      }
+    } catch (err) {
+      setToastMessage({ type: 'error', text: 'Lỗi kết nối máy chủ' });
+    }
+  }
+
+  async function handleRecommission() {
+    if (!canMaintainPrinters) return;
+    setRecommissioning(true);
+    try {
+      const res = await fetch(`/api/printers/${id}/recommission`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: user?.display_name || user?.username,
+        }),
+      });
+      if (res.ok) {
+        setToastMessage({ type: 'success', text: 'Máy in đã được khôi phục vào nhóm hoạt động!' });
+        fetchData();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setToastMessage({ type: 'error', text: body.error || 'Khôi phục máy thất bại' });
+      }
+    } finally {
+      setRecommissioning(false);
+    }
   }
 
   function startRename() {
@@ -287,6 +340,28 @@ export default function PrinterDetail() {
       </button>
 
       {/* Printer header card */}
+      {toastMessage && (
+        <div style={{
+          background: toastMessage.type === 'error' ? '#451a1a' : '#14532d',
+          color: toastMessage.type === 'error' ? '#fca5a5' : '#86efac',
+          border: `1px solid ${toastMessage.type === 'error' ? '#7f1d1d' : '#166534'}`,
+          borderRadius: 6,
+          padding: '8px 14px',
+          fontSize: 13,
+          marginBottom: 14,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <span>{toastMessage.text}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 700 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <div style={{
         background: '#131720', border: '1px solid #1e2433',
         borderRadius: 8, padding: '16px 20px', marginBottom: 24,
@@ -338,18 +413,20 @@ export default function PrinterDetail() {
           ) : (
             <>
               <span style={{ fontWeight: 800, fontSize: 20, color: '#e2e8f0' }}>{printer.name}</span>
-              <button
-                onClick={startRename}
-                title="Rename printer"
-                style={{
-                  background: 'none', border: '1px solid #2d3748',
-                  color: '#94a3b8', borderRadius: 5,
-                  padding: '3px 10px', fontSize: 11, fontWeight: 600,
-                  cursor: 'pointer', letterSpacing: '0.04em',
-                }}
-              >
-                Rename
-              </button>
+              {canManagePrinters && (
+                <button
+                  onClick={startRename}
+                  title="Rename printer"
+                  style={{
+                    background: 'none', border: '1px solid #2d3748',
+                    color: '#94a3b8', borderRadius: 5,
+                    padding: '3px 10px', fontSize: 11, fontWeight: 600,
+                    cursor: 'pointer', letterSpacing: '0.04em',
+                  }}
+                >
+                  Rename
+                </button>
+              )}
               {printer.is_active ? (
                 <span style={{
                   background: sc.bg, color: sc.text,
@@ -365,6 +442,54 @@ export default function PrinterDetail() {
                   DECOMMISSIONED
                 </span>
               )}
+
+              {/* Action buttons on header */}
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+                {canReportFailure && (
+                  <button
+                    onClick={() => setFailModalOpen(true)}
+                    title="Báo lỗi bản in & upload ảnh lỗi (Hậu kỳ, QC, Operator, Trưởng ca...)"
+                    style={{
+                      background: '#7f1d1d',
+                      color: '#fca5a5',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '5px 12px',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
+                  >
+                    <span>📸</span> Báo lỗi bản in
+                  </button>
+                )}
+
+                {!printer.is_active && canMaintainPrinters && (
+                  <button
+                    onClick={handleRecommission}
+                    disabled={recommissioning}
+                    title="Đưa máy in trở lại trạng thái sẵn sàng"
+                    style={{
+                      background: '#14532d',
+                      color: '#86efac',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '5px 12px',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: recommissioning ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
+                  >
+                    <span>🔧</span> {recommissioning ? 'Đang kích hoạt...' : 'Recommission'}
+                  </button>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -512,17 +637,19 @@ export default function PrinterDetail() {
                 </span>
               </span>
             )}
-            <button
-              onClick={startEditDetails}
-              style={{
-                background: 'none', border: '1px solid #2d3748',
-                color: '#94a3b8', borderRadius: 5,
-                padding: '3px 10px', fontSize: 11, fontWeight: 600,
-                cursor: 'pointer', letterSpacing: '0.04em', marginLeft: 'auto',
-              }}
-            >
-              Edit
-            </button>
+            {canManagePrinters && (
+              <button
+                onClick={startEditDetails}
+                style={{
+                  background: 'none', border: '1px solid #2d3748',
+                  color: '#94a3b8', borderRadius: 5,
+                  padding: '3px 10px', fontSize: 11, fontWeight: 600,
+                  cursor: 'pointer', letterSpacing: '0.04em', marginLeft: 'auto',
+                }}
+              >
+                Edit
+              </button>
+            )}
           </div>
         )}
 
@@ -562,8 +689,8 @@ export default function PrinterDetail() {
         borderRadius: 8, padding: '14px 18px', marginBottom: 24,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8' }}>Ghi chú kỹ thuật / Vận hành</div>
-          {!canOperate && (
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8' }}>Ghi chú kỹ thuật / Vận hành / Báo cáo</div>
+          {!canAddNotes && (
             <span style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>Quyền Viewer (chỉ xem)</span>
           )}
         </div>
@@ -571,9 +698,9 @@ export default function PrinterDetail() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
             <textarea
               value={note}
-              disabled={!canOperate}
+              disabled={!canAddNotes}
               onChange={e => setNote(e.target.value)}
-              placeholder={canOperate ? "Mô tả kết quả kiểm tra, hiện tượng lỗi hoặc ghi chú bảo trì…" : "Tài khoản của bạn chỉ có quyền xem"}
+              placeholder={canAddNotes ? "Mô tả kết quả kiểm tra, hiện tượng lỗi hoặc ghi chú bảo trì…" : "Tài khoản Viewer chỉ có quyền xem"}
               rows={2}
               style={{
                 flex: 1,
@@ -586,20 +713,20 @@ export default function PrinterDetail() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <button
                 type="submit"
-                disabled={saving || (!note.trim() && !notePhoto) || !canOperate}
+                disabled={saving || (!note.trim() && !notePhoto) || !canAddNotes}
                 style={{
-                  background: saving || (!note.trim() && !notePhoto) || !canOperate ? '#1e2433' : '#1e40af',
-                  color: saving || (!note.trim() && !notePhoto) || !canOperate ? '#475569' : '#fff',
+                  background: saving || (!note.trim() && !notePhoto) || !canAddNotes ? '#1e2433' : '#1e40af',
+                  color: saving || (!note.trim() && !notePhoto) || !canAddNotes ? '#475569' : '#fff',
                   border: 'none', borderRadius: 5,
                   padding: '7px 16px', fontSize: 13, fontWeight: 600,
-                  cursor: saving || (!note.trim() && !notePhoto) || !canOperate ? 'not-allowed' : 'pointer',
+                  cursor: saving || (!note.trim() && !notePhoto) || !canAddNotes ? 'not-allowed' : 'pointer',
                   whiteSpace: 'nowrap',
                 }}
               >
                 {saving ? 'Đang lưu…' : 'Lưu ghi chú'}
               </button>
 
-              {canOperate && (
+              {canAddNotes && (
                 <button
                   type="button"
                   onClick={() => noteFileInputRef.current?.click()}
@@ -793,6 +920,15 @@ export default function PrinterDetail() {
           src={modalImage.src}
           title={modalImage.title}
           onClose={() => setModalImage(null)}
+        />
+      )}
+
+      {failModalOpen && printer && (
+        <FailModal
+          isOpen={failModalOpen}
+          printer={printer}
+          onClose={() => setFailModalOpen(false)}
+          onSubmit={handleFailModalSubmit}
         />
       )}
     </div>

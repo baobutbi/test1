@@ -223,6 +223,9 @@ async function initDb() {
     } catch (_) {}
     try {
       db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('dispatch_batch_size', '10')").run();
+      db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('farm_name', '3D Vincons Window')").run();
+      // If still set to generic default 'Print Farm', upgrade to 3D Vincons Window
+      db.prepare("UPDATE settings SET value = '3D Vincons Window' WHERE key = 'farm_name' AND (value = 'Print Farm' OR value = '')").run();
     } catch (_) {}
 
     // Users and auth tables

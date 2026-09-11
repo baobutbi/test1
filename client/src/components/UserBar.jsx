@@ -13,12 +13,26 @@ export default function UserBar({ compact = false }) {
   const getRoleBadge = (role) => {
     switch (role) {
       case 'admin':
-        return { label: 'Admin', bg: '#451a03', color: '#f59e0b', border: '#b45309' };
+        return { label: 'Admin', full: 'Quản trị hệ thống', bg: '#fef2f2', color: '#b91c1c', border: '#fecaca', icon: '🛡️' };
+      case 'director':
+        return { label: 'Giám đốc', full: 'Giám đốc Nhà máy', bg: '#fff7ed', color: '#c2410c', border: '#ffedd5', icon: '👔' };
+      case 'manager':
+        return { label: 'Quản đốc', full: 'Quản đốc Xưởng', bg: '#fefce8', color: '#a16207', border: '#fef08a', icon: '🏭' };
+      case 'shift_leader':
+        return { label: 'Trưởng ca', full: 'Trưởng ca Sản xuất', bg: '#fef9c3', color: '#854d0e', border: '#fde047', icon: '⏱️' };
+      case 'supervisor':
+        return { label: 'Giám sát', full: 'Giám sát Sản xuất', bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd', icon: '🔍' };
+      case 'qc':
+        return { label: 'QC / KCS', full: 'Kiểm soát chất lượng', bg: '#ecfeff', color: '#0e7490', border: '#a5f3fc', icon: '🎯' };
+      case 'technician':
+        return { label: 'Kỹ thuật', full: 'Kỹ thuật viên Bảo trì', bg: '#faf5ff', color: '#7e22ce', border: '#e9d5ff', icon: '🔧' };
       case 'operator':
-        return { label: 'Operator', bg: '#064e3b', color: '#34d399', border: '#059669' };
+        return { label: 'Vận hành', full: 'Kỹ thuật viên Vận hành', bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', icon: '🖨️' };
+      case 'post_processing':
+        return { label: 'Hậu kỳ', full: 'Xử lý Hậu kỳ (Báo lỗi in)', bg: '#fdf2f8', color: '#be185d', border: '#fbcfe8', icon: '🎨' };
       case 'viewer':
       default:
-        return { label: 'Viewer', bg: '#1e293b', color: '#94a3b8', border: '#475569' };
+        return { label: 'Chỉ xem', full: 'Khách / Giám sát xem', bg: '#f8fafc', color: '#475569', border: '#cbd5e1', icon: '👁️' };
     }
   };
 
@@ -48,40 +62,42 @@ export default function UserBar({ compact = false }) {
       {/* Current User Card */}
       <div
         style={{
-          background: '#0f172a',
-          border: '1px solid #1e293b',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
           borderRadius: 8,
           padding: compact ? '6px 10px' : '10px 12px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 8,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <div
             style={{
-              width: compact ? 26 : 32,
-              height: compact ? 26 : 32,
+              width: compact ? 28 : 34,
+              height: compact ? 28 : 34,
               borderRadius: '50%',
-              background: user?.role === 'admin' ? '#b45309' : user?.role === 'operator' ? '#059669' : '#475569',
-              color: '#fff',
+              background: currentBadge.bg,
+              border: `2px solid ${currentBadge.border}`,
+              color: currentBadge.color,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
-              fontSize: compact ? 11 : 13,
+              fontSize: compact ? 12 : 14,
               flexShrink: 0,
             }}
           >
-            {(user?.display_name || user?.username || 'U').charAt(0).toUpperCase()}
+            {currentBadge.icon || (user?.display_name || user?.username || 'U').charAt(0).toUpperCase()}
           </div>
           <div style={{ minWidth: 0, overflow: 'hidden' }}>
             <div
               style={{
                 fontSize: compact ? 12 : 13,
-                fontWeight: 600,
-                color: '#e2e8f0',
+                fontWeight: 700,
+                color: '#0f172a',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -112,9 +128,9 @@ export default function UserBar({ compact = false }) {
           onClick={() => setShowSwitchMenu(!showSwitchMenu)}
           title="Chuyển quyền / Tài khoản"
           style={{
-            background: '#1e293b',
-            border: '1px solid #334155',
-            color: '#cbd5e1',
+            background: '#f8fafc',
+            border: '1px solid #cbd5e1',
+            color: '#334155',
             borderRadius: 6,
             padding: '4px 8px',
             fontSize: 11,
@@ -138,12 +154,12 @@ export default function UserBar({ compact = false }) {
             right: 0,
             marginBottom: compact ? 0 : 6,
             marginTop: compact ? 6 : 0,
-            background: '#131720',
-            border: '1px solid #334155',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: 8,
             padding: 8,
             zIndex: 100,
-            boxShadow: '0 10px 25px rgba(0,0,0,0.6)',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
           }}
         >
           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', padding: '4px 8px', textTransform: 'uppercase' }}>
@@ -167,9 +183,9 @@ export default function UserBar({ compact = false }) {
                   justifyContent: 'space-between',
                   padding: '6px 8px',
                   borderRadius: 5,
-                  background: isCurrent ? '#1e3a8a' : 'transparent',
-                  border: 'none',
-                  color: isCurrent ? '#fff' : '#cbd5e1',
+                  background: isCurrent ? '#fef2f2' : 'transparent',
+                  border: isCurrent ? '1px solid #fecaca' : 'none',
+                  color: isCurrent ? '#da251d' : '#334155',
                   fontSize: 12,
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -178,7 +194,7 @@ export default function UserBar({ compact = false }) {
               >
                 <div>
                   <span style={{ fontWeight: 600 }}>{u.display_name || u.username}</span>
-                  <span style={{ color: isCurrent ? '#93c5fd' : '#64748b', fontSize: 11, marginLeft: 6 }}>
+                  <span style={{ color: isCurrent ? '#dc2626' : '#94a3b8', fontSize: 11, marginLeft: 6 }}>
                     (@{u.username})
                   </span>
                 </div>
@@ -199,7 +215,7 @@ export default function UserBar({ compact = false }) {
             );
           })}
 
-          <div style={{ borderTop: '1px solid #1e2433', margin: '6px 0' }} />
+          <div style={{ borderTop: '1px solid #e2e8f0', margin: '6px 0' }} />
 
           <div style={{ display: 'flex', gap: 6 }}>
             <button
@@ -210,9 +226,9 @@ export default function UserBar({ compact = false }) {
               }}
               style={{
                 flex: 1,
-                background: '#1e293b',
-                color: '#e2e8f0',
-                border: '1px solid #334155',
+                background: '#f8fafc',
+                color: '#334155',
+                border: '1px solid #cbd5e1',
                 borderRadius: 4,
                 padding: '5px 0',
                 fontSize: 11,
@@ -230,8 +246,8 @@ export default function UserBar({ compact = false }) {
               }}
               style={{
                 flex: 1,
-                background: '#14532d',
-                color: '#86efac',
+                background: '#da251d',
+                color: '#ffffff',
                 border: 'none',
                 borderRadius: 4,
                 padding: '5px 0',
@@ -252,42 +268,51 @@ export default function UserBar({ compact = false }) {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.75)',
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
             padding: 16,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(3px)',
           }}
           onClick={() => setShowAuthModal(false)}
         >
           <div
             style={{
-              background: '#131720',
-              border: '1px solid #334155',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
               borderRadius: 10,
               padding: '24px 28px',
               maxWidth: 420,
               width: '100%',
-              boxShadow: '0 25px 50px rgba(0,0,0,0.6)',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px 0' }}>
-              {isRegisterMode ? 'Tạo tài khoản người dùng mới' : 'Đăng nhập vào Print Farm'}
-            </h2>
-            <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 16px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                🏢
+              </div>
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  {isRegisterMode ? '3D Vincons Window — Tạo tài khoản mới' : '3D Vincons Window — Đăng nhập hệ thống'}
+                </h2>
+                <div style={{ fontSize: 11, color: '#da251d', fontWeight: 600 }}>Tập đoàn Vingroup • Xưởng In 3D Công nghiệp</div>
+              </div>
+            </div>
+            <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px 0' }}>
               {isRegisterMode
-                ? 'Đăng ký tài khoản để vận hành hoặc theo dõi hệ thống máy in.'
-                : 'Nhập thông tin tài khoản của bạn để xác thực.'}
+                ? 'Đăng ký tài khoản nhân sự để vận hành hoặc theo dõi hệ thống máy in.'
+                : 'Nhập thông tin tài khoản nhân sự của bạn để xác thực.'}
             </p>
 
             {authError && (
               <div
                 style={{
-                  background: '#7f1d1d',
-                  color: '#fca5a5',
+                  background: '#fef2f2',
+                  color: '#b91c1c',
+                  border: '1px solid #fecaca',
                   padding: '8px 12px',
                   borderRadius: 6,
                   fontSize: 12,
@@ -300,7 +325,7 @@ export default function UserBar({ compact = false }) {
 
             <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 4 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4 }}>
                   Tên đăng nhập (Username) *
                 </label>
                 <input
@@ -310,11 +335,11 @@ export default function UserBar({ compact = false }) {
                   onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
                   style={{
                     width: '100%',
-                    background: '#0f172a',
-                    border: '1px solid #334155',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
                     borderRadius: 6,
                     padding: '8px 10px',
-                    color: '#fff',
+                    color: '#0f172a',
                     fontSize: 13,
                     boxSizing: 'border-box',
                   }}
@@ -324,7 +349,7 @@ export default function UserBar({ compact = false }) {
               {isRegisterMode && (
                 <>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 4 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4 }}>
                       Họ và tên / Tên hiển thị
                     </label>
                     <input
@@ -334,11 +359,11 @@ export default function UserBar({ compact = false }) {
                       placeholder="Nguyễn Văn A"
                       style={{
                         width: '100%',
-                        background: '#0f172a',
-                        border: '1px solid #334155',
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
                         borderRadius: 6,
                         padding: '8px 10px',
-                        color: '#fff',
+                        color: '#0f172a',
                         fontSize: 13,
                         boxSizing: 'border-box',
                       }}
@@ -346,21 +371,21 @@ export default function UserBar({ compact = false }) {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 4 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4 }}>
                       Email
                     </label>
                     <input
                       type="email"
                       value={authForm.email}
                       onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-                      placeholder="user@printfarm.vn"
+                      placeholder="user@vincons.vingroup.net"
                       style={{
                         width: '100%',
-                        background: '#0f172a',
-                        border: '1px solid #334155',
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
                         borderRadius: 6,
                         padding: '8px 10px',
-                        color: '#fff',
+                        color: '#0f172a',
                         fontSize: 13,
                         boxSizing: 'border-box',
                       }}
@@ -368,7 +393,7 @@ export default function UserBar({ compact = false }) {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 4 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4 }}>
                       Phân quyền (Role)
                     </label>
                     <select
@@ -376,25 +401,32 @@ export default function UserBar({ compact = false }) {
                       onChange={(e) => setAuthForm({ ...authForm, role: e.target.value })}
                       style={{
                         width: '100%',
-                        background: '#0f172a',
-                        border: '1px solid #334155',
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
                         borderRadius: 6,
                         padding: '8px 10px',
-                        color: '#fff',
+                        color: '#0f172a',
                         fontSize: 13,
                         boxSizing: 'border-box',
                       }}
                     >
-                      <option value="operator">Operator (Vận hành in & Báo lỗi)</option>
-                      <option value="viewer">Viewer (Chỉ xem / Giám sát)</option>
-                      <option value="admin">Admin (Toàn quyền quản trị)</option>
+                      <option value="operator">🖨️ Nhân viên Vận hành (Set Ready, Báo lỗi)</option>
+                      <option value="post_processing">🎨 Nhân viên Hậu kỳ (Xử lý sản phẩm, Báo lỗi in)</option>
+                      <option value="qc">🎯 Nhân viên QC / KCS (Kiểm soát chất lượng, Báo lỗi)</option>
+                      <option value="technician">🔧 Kỹ thuật viên Bảo trì Máy</option>
+                      <option value="supervisor">🔍 Giám sát Sản xuất</option>
+                      <option value="shift_leader">⏱️ Trưởng ca Sản xuất (Kỹ thuật + Giám sát)</option>
+                      <option value="manager">🏭 Quản đốc Xưởng In (Kỹ thuật + Giám sát)</option>
+                      <option value="director">👔 Giám đốc Nhà máy (3D Vincons)</option>
+                      <option value="viewer">👁️ Người xem / Khách (Chỉ xem)</option>
+                      <option value="admin">🛡️ Quản trị viên Hệ thống (Admin)</option>
                     </select>
                   </div>
                 </>
               )}
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 4 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4 }}>
                   Mật khẩu *
                 </label>
                 <input
@@ -404,11 +436,11 @@ export default function UserBar({ compact = false }) {
                   onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
                   style={{
                     width: '100%',
-                    background: '#0f172a',
-                    border: '1px solid #334155',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
                     borderRadius: 6,
                     padding: '8px 10px',
-                    color: '#fff',
+                    color: '#0f172a',
                     fontSize: 13,
                     boxSizing: 'border-box',
                   }}
@@ -420,13 +452,14 @@ export default function UserBar({ compact = false }) {
                   type="button"
                   onClick={() => setShowAuthModal(false)}
                   style={{
-                    background: '#1e293b',
-                    color: '#94a3b8',
-                    border: '1px solid #334155',
+                    background: '#f8fafc',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1',
                     borderRadius: 6,
                     padding: '8px 14px',
                     fontSize: 13,
                     cursor: 'pointer',
+                    fontWeight: 600,
                   }}
                 >
                   Đóng
@@ -435,13 +468,13 @@ export default function UserBar({ compact = false }) {
                   type="submit"
                   disabled={authSubmitting}
                   style={{
-                    background: '#1e40af',
+                    background: '#da251d',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 6,
                     padding: '8px 18px',
                     fontSize: 13,
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: authSubmitting ? 'not-allowed' : 'pointer',
                   }}
                 >
@@ -459,10 +492,11 @@ export default function UserBar({ compact = false }) {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#60a5fa',
+                    color: '#da251d',
                     fontSize: 12,
                     cursor: 'pointer',
                     textDecoration: 'underline',
+                    fontWeight: 600,
                   }}
                 >
                   {isRegisterMode ? 'Đã có tài khoản? Đăng nhập ngay' : 'Chưa có tài khoản? Tạo tài khoản mới'}

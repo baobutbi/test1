@@ -27,7 +27,19 @@ module.exports = (db) => {
     const users = db.prepare(`
       SELECT id, username, role, display_name, email, is_active
       FROM users
-      ORDER BY CASE role WHEN 'admin' THEN 1 WHEN 'operator' THEN 2 ELSE 3 END, username ASC
+      ORDER BY 
+        CASE role 
+          WHEN 'admin' THEN 1 
+          WHEN 'director' THEN 2 
+          WHEN 'manager' THEN 3 
+          WHEN 'shift_leader' THEN 4 
+          WHEN 'supervisor' THEN 5 
+          WHEN 'qc' THEN 6 
+          WHEN 'technician' THEN 7 
+          WHEN 'operator' THEN 8 
+          WHEN 'post_processing' THEN 9 
+          ELSE 10 
+        END, username ASC
     `).all();
     res.json(users);
   });
@@ -140,11 +152,16 @@ module.exports = (db) => {
     const adminCount = db.prepare("SELECT COUNT(*) AS c FROM users WHERE role = 'admin'").get()?.c || 0;
     let assignedRole = 'operator';
 
+    const ALL_ROLES = ['admin', 'director', 'manager', 'shift_leader', 'supervisor', 'qc', 'technician', 'operator', 'post_processing', 'viewer'];
     if (adminCount === 0) {
       assignedRole = 'admin';
-    } else if (req.user && req.user.role === 'admin' && role) {
-      assignedRole = ['admin', 'operator', 'viewer'].includes(role) ? role : 'operator';
-    } else if (role && ['operator', 'viewer'].includes(role)) {
+    } else if (req.user && (req.user.role === 'admin' || req.user.role === 'director') && role) {
+      if (req.user.role === 'director' && role === 'admin') {
+        assignedRole = 'operator';
+      } else {
+        assignedRole = ALL_ROLES.includes(role) ? role : 'operator';
+      }
+    } else if (role && ALL_ROLES.includes(role) && role !== 'admin' && role !== 'director') {
       assignedRole = role;
     }
 

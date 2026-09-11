@@ -1269,7 +1269,7 @@ export default function Settings() {
       {/* Footer Branding */}
       <section style={{ maxWidth: 640, borderTop: '1px solid #1e2433', paddingTop: 20 }}>
         <p style={{ color: '#64748b', fontSize: 13, lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
-          iloveVinGroup | 3D Vincons Window
+          3D Vincons Window — Hệ thống Quản trị Nông trại In 3D Công nghiệp
         </p>
       </section>
     </div>
