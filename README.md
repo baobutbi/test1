@@ -71,16 +71,17 @@ No cloud. No subscriptions. No vendor lock-in.
 Requires **Node.js 22 LTS** — Node 24+ has known issues compiling the native SQLite dependency on Windows (see the [Installation Guide](docs/installation.md) for details).
 
 ```bash
-git clone https://github.com/joeltelling/print-farm-manager.git
+git clone <your-repo-url>
 cd print-farm-manager
 npm install
 cd client && npm install && cd ..
 npm run build
-npm run dev
+npm start
 ```
 
-- API server: `http://localhost:3000`
-- Web UI (hot reload): `http://localhost:5173`
+- Web UI & API: `http://localhost:3001` (tránh xung đột với cổng 3000 đang dùng trên máy bạn)
+- Tùy chỉnh cổng: Tạo file `.env` và đặt `PORT=3001` (hoặc `8080`, `5000` tùy ý)
+- Chế độ thực tế (tắt Demo): Mặc định khi chạy local hệ thống đã đặt `DEMO_MODE=false` để bạn kết nối trực tiếp với máy in trong xưởng.
 
 ### Prefer Docker instead of a local Node.js install?
 

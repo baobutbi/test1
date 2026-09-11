@@ -21,7 +21,13 @@ const events         = require('./events');
 const backup         = require('./backup');
 
 const app  = express();
-const PORT = 3000;
+
+// Detect whether running in cloud preview sandbox (fixed port 3000) or locally on user machine
+const isCloudSandbox = Boolean(process.env.APPLET_ID || process.env.DEFAULT_APP_PORT);
+// On user's local machine, defaults to 3001 (or process.env.PORT / process.env.APP_PORT), avoiding conflict with port 3000
+const PORT = isCloudSandbox
+  ? 3000
+  : (process.env.APP_PORT ? parseInt(process.env.APP_PORT, 10) : (process.env.PORT ? parseInt(process.env.PORT, 10) : 3001));
 
 app.use(express.json({ limit: '30mb' }));
 app.use(express.urlencoded({ limit: '30mb', extended: true }));
@@ -49,22 +55,32 @@ app.delete('/api/notifications/:id', (req, res) => {
 let serverInstance = null;
 
 async function startServer() {
-  if (
-    process.env.DEMO_MODE === undefined ||
-    process.env.DEMO_MODE === '1' ||
-    process.env.DEMO_MODE === 'true' ||
-    process.env.DEMO_MODE === 'yes'
-  ) {
-    process.env.DEMO_MODE = 'true';
+  if (!isCloudSandbox) {
+    // When running locally outside cloud sandbox, default to real hardware mode (DEMO_MODE=false)
+    if (process.env.DEMO_MODE === undefined || process.env.DEMO_MODE === 'false' || process.env.DEMO_MODE === '0') {
+      process.env.DEMO_MODE = 'false';
+    } else if (process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1' || process.env.DEMO_MODE === 'yes') {
+      process.env.DEMO_MODE = 'true';
+    }
+  } else {
+    // Inside cloud sandbox preview
+    if (
+      process.env.DEMO_MODE === undefined ||
+      process.env.DEMO_MODE === '1' ||
+      process.env.DEMO_MODE === 'true' ||
+      process.env.DEMO_MODE === 'yes'
+    ) {
+      process.env.DEMO_MODE = 'true';
+    }
   }
 
   const db = await initDb();
 
-  // Auto-seed demo data on fresh start if database has 0 printers
+  // Auto-seed demo data on fresh start ONLY if DEMO_MODE is true
   try {
     const row = db.prepare('SELECT COUNT(*) AS c FROM printers').get();
-    if (!row || row.c === 0) {
-      console.log('[server] Fresh install detected: seeding demo fleet...');
+    if ((!row || row.c === 0) && process.env.DEMO_MODE === 'true') {
+      console.log('[server] Fresh install detected in demo mode: seeding demo fleet...');
       const { seedDemo } = require('./seed-demo');
       seedDemo(db);
     }

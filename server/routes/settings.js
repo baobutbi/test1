@@ -38,5 +38,31 @@ module.exports = (db) => {
     res.json({ key, value: String(value) });
   });
 
+  // POST /api/settings/clear-demo — clear all demo printers and jobs to start with a clean farm
+  router.post('/clear-demo', (req, res) => {
+    try {
+      db.prepare('DELETE FROM jobs').run();
+      db.prepare('DELETE FROM parts').run();
+      db.prepare('DELETE FROM gcodes').run();
+      db.prepare('DELETE FROM projects').run();
+      db.prepare('DELETE FROM printer_events').run();
+      db.prepare('DELETE FROM printers').run();
+      res.json({ ok: true, message: 'Đã xóa toàn bộ máy in và dữ liệu mẫu thành công' });
+    } catch (err) {
+      res.status(500).json({ error: `Lỗi khi xóa dữ liệu: ${err.message}` });
+    }
+  });
+
+  // POST /api/settings/load-demo — reload demo fleet
+  router.post('/load-demo', (req, res) => {
+    try {
+      const { seedDemo } = require('../seed-demo');
+      seedDemo(db);
+      res.json({ ok: true, message: 'Đã nạp lại dữ liệu mẫu thành công' });
+    } catch (err) {
+      res.status(500).json({ error: `Lỗi khi nạp dữ liệu mẫu: ${err.message}` });
+    }
+  });
+
   return router;
 };

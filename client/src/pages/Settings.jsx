@@ -49,7 +49,47 @@ export default function Settings() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [flaggedModels, setFlaggedModels] = useState({});
+  const [clearingDemo, setClearingDemo] = useState(false);
+  const [loadingDemo, setLoadingDemo] = useState(false);
   const fileRef = useRef(null);
+
+  async function handleClearDemo() {
+    const ok = await confirm({
+      title: 'Xóa toàn bộ dữ liệu mẫu?',
+      message: 'Thao tác này sẽ xóa toàn bộ danh sách máy in, dự án, lệnh in mẫu để bạn bắt đầu với nông trại in trống hoàn toàn. Bạn có chắc chắn muốn xóa không?',
+      confirmLabel: 'Xóa dữ liệu mẫu',
+      danger: true,
+    });
+    if (!ok) return;
+
+    setClearingDemo(true);
+    try {
+      const res = await fetch('/api/settings/clear-demo', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi khi xóa dữ liệu');
+      showToast('Đã xóa toàn bộ máy in và dữ liệu mẫu', 'success');
+      fetchModels();
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setClearingDemo(false);
+    }
+  }
+
+  async function handleLoadDemo() {
+    setLoadingDemo(true);
+    try {
+      const res = await fetch('/api/settings/load-demo', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi khi nạp dữ liệu');
+      showToast('Đã nạp lại dữ liệu mẫu thành công', 'success');
+      fetchModels();
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setLoadingDemo(false);
+    }
+  }
 
   // Add single printer
   // Printer models — fetched from DB, used throughout this page
@@ -1254,6 +1294,50 @@ export default function Settings() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* Demo Fleet Management */}
+      <section style={{ background: '#1e2433', borderRadius: 10, padding: 20, maxWidth: 640 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Quản lý Dữ liệu Mẫu (Demo Fleet)</h2>
+        <p style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>
+          Khi triển khai phần mềm cho xưởng in thực tế, bạn có thể xóa toàn bộ dữ liệu mẫu (danh sách máy in, dự án, lệnh in giả lập) để hệ thống hoàn toàn trống và sẵn sàng kết nối máy in thật qua mạng LAN.
+        </p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleClearDemo}
+            disabled={clearingDemo || loadingDemo}
+            style={{
+              background: '#7f1d1d',
+              color: '#fca5a5',
+              border: '1px solid #991b1b',
+              borderRadius: 6,
+              padding: '8px 16px',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: clearingDemo || loadingDemo ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {clearingDemo ? 'Đang xóa...' : '🗑️ Xóa toàn bộ dữ liệu mẫu (Clear Demo)'}
+          </button>
+          <button
+            type="button"
+            onClick={handleLoadDemo}
+            disabled={clearingDemo || loadingDemo}
+            style={{
+              background: '#1e293b',
+              color: '#94a3b8',
+              border: '1px solid #334155',
+              borderRadius: 6,
+              padding: '8px 16px',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: clearingDemo || loadingDemo ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {loadingDemo ? 'Đang nạp...' : '🔄 Nạp lại dữ liệu mẫu (Load Demo)'}
+          </button>
+        </div>
       </section>
 
       {/* Polling interval info */}
