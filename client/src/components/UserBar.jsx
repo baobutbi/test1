@@ -147,7 +147,7 @@ export default function UserBar({ compact = false }) {
           }}
         >
           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', padding: '4px 8px', textTransform: 'uppercase' }}>
-            Chuyển nhanh vai trò (Demo):
+            Chuyển nhanh vai trò:
           </div>
 
           {demoUsers.map((u) => {

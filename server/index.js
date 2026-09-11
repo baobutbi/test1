@@ -13,6 +13,15 @@ const express = require('express');
 const path    = require('path');
 const fs      = require('fs');
 
+// Load environment variables from .env file if present
+try {
+  require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+} catch (_) {
+  try {
+    if (typeof process.loadEnvFile === 'function') process.loadEnvFile();
+  } catch (_2) {}
+}
+
 const { initDb }      = require('./db');
 const PrinterPoller  = require('./poller');
 const JobScheduler   = require('./scheduler');
@@ -55,38 +64,16 @@ app.delete('/api/notifications/:id', (req, res) => {
 let serverInstance = null;
 
 async function startServer() {
-  if (!isCloudSandbox) {
-    // When running locally outside cloud sandbox, default to real hardware mode (DEMO_MODE=false)
-    if (process.env.DEMO_MODE === undefined || process.env.DEMO_MODE === 'false' || process.env.DEMO_MODE === '0') {
-      process.env.DEMO_MODE = 'false';
-    } else if (process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1' || process.env.DEMO_MODE === 'yes') {
-      process.env.DEMO_MODE = 'true';
-    }
-  } else {
-    // Inside cloud sandbox preview
-    if (
-      process.env.DEMO_MODE === undefined ||
-      process.env.DEMO_MODE === '1' ||
-      process.env.DEMO_MODE === 'true' ||
-      process.env.DEMO_MODE === 'yes'
-    ) {
-      process.env.DEMO_MODE = 'true';
-    }
-  }
+  // Demo mode is completely disabled by default
+  process.env.DEMO_MODE = 'false';
 
   const db = await initDb();
 
-  // Auto-seed demo data on fresh start ONLY if DEMO_MODE is true
+  // Purge any mock/demo printers or demo jobs from earlier runs
   try {
-    const row = db.prepare('SELECT COUNT(*) AS c FROM printers').get();
-    if ((!row || row.c === 0) && process.env.DEMO_MODE === 'true') {
-      console.log('[server] Fresh install detected in demo mode: seeding demo fleet...');
-      const { seedDemo } = require('./seed-demo');
-      seedDemo(db);
-    }
-  } catch (err) {
-    console.error('[server] Error checking/seeding demo data:', err.message);
-  }
+    db.prepare("DELETE FROM printers WHERE api_key LIKE '%demo%' OR serial LIKE '%DEMO%' OR name LIKE 'MK4S_0%' OR name LIKE 'Centauri_0%' OR name LIKE 'Voron_0%' OR name LIKE 'X1C_0%'").run();
+    db.prepare("DELETE FROM jobs WHERE gcode_name LIKE '%demo%' OR gcode_name LIKE '%benchy%' OR gcode_name LIKE '%gridfinity%'").run();
+  } catch (_) {}
 
   const { getAuthMiddleware } = require('./auth');
   app.use(getAuthMiddleware(db));

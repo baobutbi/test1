@@ -12,7 +12,7 @@ export default defineConfig({
     host: process.env.VITE_DOCKER_HOST ? true : undefined,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_API_TARGET || (process.env.APPLET_ID ? 'http://localhost:3000' : `http://localhost:${process.env.PORT || '3001'}`),
         changeOrigin: true,
       },
     },
